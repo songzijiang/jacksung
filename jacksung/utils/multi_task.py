@@ -30,9 +30,11 @@ class MultiTasks:
     def add_task(self, k, function, args):
         self.task_list[k] = (function, args)
 
-    def execute_task_nowait(self):
+    def execute_task_nowait(self, save=False):
         for k, f_and_a in self.task_list.items():
-            self.features[k] = self.executor.submit(f_and_a[0], *f_and_a[1])
+            r = self.executor.submit(f_and_a[0], *f_and_a[1])
+            if save:
+                self.features[k] = r
 
     def execute_task(self, print_percent=True, desc=None):
         with self.pool(max_workers=self.threads, initializer=init,
