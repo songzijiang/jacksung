@@ -13,7 +13,8 @@ Create env by conda:
     windows:chromedriver.exe
     linux:chromedriver
 
-    p.s. chrome should be installed first, [see how to install chrome](https://www.google.com/chrome/)
+    p.s. chrome should be installed first, 
+[see how to install Chrome](https://www.google.com/chrome/)
 2 make the directory 'chrome' in the home path
 
 3 put the driver file, and make a new directory 'tmp' in the 'chrome' directory. The structure of directory:
