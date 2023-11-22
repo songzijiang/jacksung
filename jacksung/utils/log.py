@@ -3,6 +3,7 @@ from urllib.parse import quote
 import _thread
 import time
 import threading
+import sys
 
 threadLock = threading.Lock()
 
@@ -28,6 +29,22 @@ def thread_send_log(url, content, name):
     finally:
         # print("----------------sendLog...----------------")
         threadLock.release()
+
+
+class StdLog(object):
+    def __init__(self, filename='default.log', stream=sys.stdout):
+        self.terminal = stream
+        self.log = open(filename, 'a')
+
+    def write(self, message):
+        self.terminal.write(message)
+        if str(message).count('TemporaryTag') == 0:
+            self.log.write(message)
+            self.log.flush()
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
 
 
 class LogClass:
