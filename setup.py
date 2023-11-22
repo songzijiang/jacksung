@@ -4,6 +4,7 @@ setup(
     name='jacksung',
     version='0.0.2.57',
     author='Zijiang Song',
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=[
