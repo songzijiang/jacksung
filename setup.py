@@ -2,8 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name='jacksung',
-    version='0.0.2.55',
+    version='0.0.2.57',
     author='Zijiang Song',
+    long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=[
         'tqdm',
