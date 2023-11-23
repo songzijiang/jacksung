@@ -42,13 +42,13 @@ login.logout()
 ```
 
 ## Log
-time format log
+### time format log
 ```
 from jacksung.utils.log import oprint as print
 
 print('this is a log')
 ```
-
+### Send log message to server
 ```
 # the URL should accept parameters name and content, e.g. https://www.example.com?log&api-key=123&name=logname&content=logcontent
 log_class = LogClass(url='https://www.example.com?log&api-key=123')
@@ -56,7 +56,19 @@ log_class.send_log('35.8', 'PSNR')
 log_class.send_log('35.8', 'PSNR')
 time.sleep(10)
 ```
+### record the terminal log to file
 
+```
+from jacksung.utils.log import StdLog
+import sys
+
+# please put the following code in the '__main__' function
+if __name__ == '__main__':
+    sys.stdout = StdLog(filename='log.txt', warning_path='warning.txt')
+    print('[TemporaryTag]only in terminal', end='[TemporaryTag]\n')
+    print(f'[Warning]in warning.txt and terminal', end='[Warning]\n')
+    print(f'in log.txt and terminal')
+```
 ## Multi threadings
 ```
 from jacksung.utils.multi_task import MultiTasks
@@ -72,6 +84,14 @@ for idx in range(10):
     mt.add_task(idx, worker, (idx))
 results = mt.execute_task()
 ```
+## Fast numpy
+```
+import jacksung.utils.fastnumpy as fnp
+
+# fast than numpy.load('xx.npy')
+fnp.load('xx.npy')
+```
+
 ## Connecting to mysql
 ```
 from jacksung.utils.base_db import BaseDB, convert_str
