@@ -37,10 +37,11 @@ class StdLog(object):
         self.log = open(filename, 'a')
 
     def write(self, message):
-        self.terminal.write(message)
-        if str(message).count('TemporaryTag') == 0:
+        if str(message).count('[TemporaryTag]') == 0:
+            message = str(message).replace('[TemporaryTag]', '')
             self.log.write(message)
             self.log.flush()
+        self.terminal.write(message)
 
     def flush(self):
         self.terminal.flush()
