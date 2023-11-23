@@ -10,7 +10,7 @@ class RemainTime:
         self.epoch = epoch
         self.now_epoch = 0
 
-    def update(self, log_temp='Rem Epochs:{}, Fin in {}', print_log=True, update_step=1):
+    def update(self, log_temp='Sep {}, Rem Epochs:{}, Fin in {}', print_log=True, update_step=1):
         self.now_epoch += update_step
         epoch_time = time.time() - self.start_time
         epoch_remaining = self.epoch - self.now_epoch
@@ -18,7 +18,7 @@ class RemainTime:
         pytz.timezone('Asia/Shanghai')  # 东八区
         t = datetime.fromtimestamp(int(time.time()) + time_remaining,
                                    pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
-        log = log_temp.format(epoch_remaining, t)
+        log = log_temp.format(epoch_time, epoch_remaining, t)
         if print_log:
             oprint(log)
         self.start_time = time.time()
