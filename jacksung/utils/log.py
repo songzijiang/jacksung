@@ -39,6 +39,7 @@ class StdLog(object):
     def write(self, message):
         if str(message).count('[TemporaryTag]') == 0:
             message = str(message).replace('[TemporaryTag]', '')
+        else:
             self.log.write(message)
             self.log.flush()
         self.terminal.write(message)
