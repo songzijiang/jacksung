@@ -53,7 +53,7 @@ class StdLog(object):
         else:
             message = message.replace('[TemporaryTag]', '')
         if message.count('[OnlyFile]') == 0:
-            self.terminal.write(message.replace('[Common]', ''))
+            self.terminal.write(message)
 
     def flush(self):
         self.terminal.flush()

@@ -64,10 +64,13 @@ import sys
 
 # please put the following code in the '__main__' function
 if __name__ == '__main__':
-    sys.stdout = StdLog(filename='log.txt', warning_path='warning.txt')
-    print('[TemporaryTag]only in terminal', end='[TemporaryTag]\n')
-    print(f'[Warning]in warning.txt and terminal', end='[Warning]\n')
-    print(f'in log.txt and terminal')
+    sys.stdout = StdLog(filename='log.txt', common_path='warning.txt')
+    print(f'[TemporaryTag]Only in terminal', end='[TemporaryTag]\n')
+    print(f'[Warning]In warning.txt and terminal', end='[Warning]\n')
+    print(f'[Error]In warning.txt and terminal', end='[Error]\n')
+    print(f'[Common]Common in warning.txt and terminal', end='[Common]\n')
+    print(f'[OnlyFile]OnlyFile in warning.txt and terminal', end='[OnlyFile]\n')
+    print(f'In log.txt and terminal')
 ```
 ## Multi threadings
 ```
