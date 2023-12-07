@@ -47,7 +47,8 @@ def save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None,
         print(f"TIFF image saved as '{save_path}'")
 
 
-def np2tif(input_data, save_path, out_name='out', left=None, top=None, x_res=None, y_res=None, dtype=None):
+def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, y_res=None, dtype=None,
+           dim_value=None):
     if type(input_data) == str:
         np_data = np.load(input_data)
     else:
@@ -67,10 +68,15 @@ def np2tif(input_data, save_path, out_name='out', left=None, top=None, x_res=Non
         name = ''
         idx_tmp = idx
         for s in range(len(shape[:-2])):
-            temp = idx_tmp // np.prod(shape[s + 1:-2], axis=None)
-            name += str(int(temp)) + '-'
+            name += '-'
+            temp = int(idx_tmp // np.prod(shape[s + 1:-2], axis=None))
+            if dim_value is not None:
+                plus_name = str(dim_value[s]['dim_name']) + '_' + str(dim_value[s]['value'][temp])
+            else:
+                plus_name = str(temp)
+            name += plus_name
             idx_tmp -= temp * np.prod(shape[s + 1:-2], axis=None)
-        name = name + out_name + '.tif'
+        name = out_name + name + '.tif'
         save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
 
 
@@ -81,14 +87,29 @@ def nc2np(input_data):
         nc_data = input_data
     vars = []
     max_shape = 0
+    dimensions = {}
     for name, var in nc_data.variables.items():
         if len(var.shape) > max_shape:
             max_shape = len(var.shape)
             vars = [name]
         elif len(var.shape) == max_shape:
             vars.append(name)
+        if len(var.shape) == 1:
+            dimensions[name] = list(nc_data[name][:])
     np_data = []
     for var in vars:
         np_data.append(np.array(nc_data[var][:]))
     np_data = np.array(np_data)
-    return np_data
+    value_idx = 0
+    while 'value' + str(value_idx) in dimensions:
+        value_idx += 1
+    value_key = 'value' + str(value_idx)
+    dimensions[value_key] = vars
+    np_idx = [value_key] + list(nc_data[var].dimensions)
+    return np_data, [{'dim_name': key, 'value': dimensions[key]} for key in np_idx]
+
+
+if __name__ == '__main__':
+    np_data, dim = nc2np(r'C:\Users\jackSung\Desktop\download.nc')
+    np2tif(np_data, 'com', dim_value=dim)
+    print(dim)
