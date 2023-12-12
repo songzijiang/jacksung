@@ -10,7 +10,7 @@ class RemainTime:
         self.epoch = epoch
         self.now_epoch = 0
 
-    def update(self, log_temp='Sep {:.0f}s, Rem Epochs:{}, Fin in {}', print_log=True, update_step=1):
+    def update(self, log_temp='Spe {:.0f}s, Rem Epoch:{}, Fin in {}', print_log=True, update_step=1):
         self.now_epoch += update_step
         epoch_time = time.time() - self.start_time
         epoch_remaining = self.epoch - self.now_epoch
