@@ -15,6 +15,19 @@ def cal_time(fun_str):
     print("Elapsed Time:", elapsed_time, "seconds")
 
 
+def cur_timestamp_str():
+    now = datetime.now()
+    year = str(now.year)
+    month = str(now.month).zfill(2)
+    day = str(now.day).zfill(2)
+    hour = str(now.hour).zfill(2)
+    minute = str(now.minute).zfill(2)
+    second = str(now.second).zfill(2)
+    microsecond = str(now.microsecond // 10000).zfill(2)
+    content = "{}-{}{}-{}{}-{}{}".format(year, month, day, hour, minute, second, microsecond)
+    return content
+
+
 class RemainTime:
     def __init__(self, epoch):
         self.start_time = time.time()
