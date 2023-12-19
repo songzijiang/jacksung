@@ -160,14 +160,14 @@ convert .nc to numpy, convert numpy to tif (with or without geocoordinate)
 ```
 from jacksung.utils.data_convert import nc2np, np2tif
 import numpy as np
-
-nc_t = nc2np(r'C:\Users\ECNU\Desktop\upper.nc')
+    
+nc_t, dim = nc2np(r'C:\Users\ECNU\Desktop\upper.nc')
 # nptype data and the path aims to the .npy file are allowed in the np2tif.
 # without geocoordinate
-np2tif(nc_t, 'constant_masks/upper')
+np2tif(nc_t, 'constant_masks/upper', dim_value=dim)
 # with geocoordinate
 np2tif('constant_masks/land_mask.npy', save_path='constant_masks', out_name='land_mask', left=0, top=90, x_res=0.25,
-       y_res=0.25, dtype=np.float32)
+       y_res=0.25, dtype=np.float32, dim_value=dim)
 ```
 
 ## Note
