@@ -10,6 +10,7 @@ import platform
 from selenium.common.exceptions import NoSuchElementException
 import traceback, sys
 import argparse
+import yaml
 
 
 class ecnu_login:
@@ -122,13 +123,26 @@ def main():
         description='login or logout',  # 描述
         epilog='Copyright(r), 2023'  # 说明信息
     )
+
     parser.add_argument('-t', default='login_check')
     parser.add_argument('-u', default='')
     parser.add_argument('-p', default='')
     args = parser.parse_args()
+    config_file = os.path.expanduser("~/.ecnu_login")
+    if os.path.exists(config_file):
+        opt = vars(args)
+        yaml_args = yaml.load(open(config_file), Loader=yaml.FullLoader)
+        if args.u != '' and 'u' in yaml_args:
+            yaml_args.pop('u')
+        if args.p != '' and 'p' in yaml_args:
+            yaml_args.pop('p')
+        opt.update(yaml_args)
     if args.t == 'login_check':
         login.login_check(args.u, args.p)
     elif args.t == 'login':
         login.login(args.u, args.p)
     elif args.t == 'logout':
         login.logout()
+
+
+
