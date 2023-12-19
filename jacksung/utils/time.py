@@ -4,6 +4,17 @@ import pytz
 from jacksung.utils.log import oprint
 
 
+def cal_time(fun_str):
+    # 记录第一个时间戳
+    start_time = time.time()
+    eval(fun_str)
+    # 记录第二个时间戳
+    end_time = time.time()
+    # 计算耗时
+    elapsed_time = end_time - start_time
+    print("Elapsed Time:", elapsed_time, "seconds")
+
+
 class RemainTime:
     def __init__(self, epoch):
         self.start_time = time.time()
