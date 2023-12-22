@@ -26,7 +26,7 @@ def make_dms(s):
     return result
 
 
-def save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None):
+def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None):
     h, w = np_data.shape
     os.makedirs(output_dir, exist_ok=True)
     save_path = os.path.join(output_dir, out_name)
@@ -71,13 +71,13 @@ def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, 
             name += '-'
             temp = int(idx_tmp // np.prod(shape[s + 1:-2], axis=None))
             if dim_value is not None:
-                plus_name = str(dim_value[s]['dim_name']) + '_' + str(dim_value[s]['value'][temp])
+                plus_name = str(dim_value[s]['value'][temp])
             else:
                 plus_name = str(temp)
             name += plus_name
             idx_tmp -= temp * np.prod(shape[s + 1:-2], axis=None)
         name = out_name + name + '.tif'
-        save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
+        _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
 
 
 def nc2np(input_data):
