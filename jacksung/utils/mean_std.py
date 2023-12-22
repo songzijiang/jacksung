@@ -18,10 +18,10 @@ def mean_std_part2all(num_list, mean_list, var_list):
 
 def cal_mean_std_one_loop(s, ss, count):
     mean_pixel = s / count
-    mean_level = mean_pixel.mean((2, 3))
+    mean_level = mean_pixel.mean((-2, -1))
 
     var_pixel = ss / count - np.square(mean_pixel)
-    ss_level = ss.mean((2, 3))
+    ss_level = ss.mean((-2, -1))
     var_level = ss_level / count - np.square(mean_level)
 
     std_level = np.sqrt(var_level)
