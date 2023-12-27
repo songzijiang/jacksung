@@ -1,3 +1,4 @@
+import numpy as np
 import requests
 from urllib.parse import quote
 import _thread
@@ -77,3 +78,6 @@ class LogClass:
                 _thread.start_new_thread(thread_send_log, (self.url, content, name))
             except Exception as e:
                 print("Cloud Log Error")
+
+
+
