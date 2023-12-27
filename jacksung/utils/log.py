@@ -8,8 +8,12 @@ import sys
 threadLock = threading.Lock()
 
 
+def format_log(*args):
+    return '[' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ']\t' + ' '.join([str(x) for x in args])
+
+
 def oprint(*args):
-    log = '[' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ']\t' + ' '.join([str(x) for x in args])
+    log = format_log(*args)
     print(log)
 
 
