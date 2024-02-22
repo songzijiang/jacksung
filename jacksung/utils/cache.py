@@ -11,7 +11,6 @@ class Cache:
 
     # 判断key是否在缓存中，在则返回key对应的值，否则返回False, 同时锁住该key的所有查询，直到被放入数据
     def get_key_in_cache(self, key):
-        print(len(self.cache))
         if key in self.cache_list:
             while True:
                 self.cache_L.acquire()
