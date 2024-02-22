@@ -80,9 +80,13 @@ def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, 
         _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
 
 
-def nc2np(input_data):
+def nc2np(input_data, lock=None):
     if type(input_data) == str:
+        if lock:
+            lock.acquire()
         nc_data = nc.Dataset(input_data)  # 读取.nc文件，传入f中。此时f包含了该.nc文件的全部信息
+        if lock:
+            lock.release()
     else:
         nc_data = input_data
     vars = []

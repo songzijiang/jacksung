@@ -21,8 +21,8 @@ class MultiTasks:
         self.task_list = {}
         self.features = {}
         self.results = {}
-        self.thread_mutex = threading.Lock
-        self.process_mutex = multiprocessing.Lock
+        self.thread_mutex = threading.Lock()
+        self.process_mutex = multiprocessing.Lock()
         self.executor = self.pool(max_workers=self.threads, initializer=init,
                                   initargs=(self.thread_mutex, self.process_mutex))
         self.desc = desc
