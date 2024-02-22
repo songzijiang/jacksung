@@ -163,6 +163,11 @@ import numpy as np
     
 nc_t, dim = nc2np(r'C:\Users\ECNU\Desktop\upper.nc')
 # nptype data and the path aims to the .npy file are allowed in the np2tif.
+# dim_value examples:
+# 3 dimension example
+# dim_value=[{'value': ['WIN', 'TMP', 'PRS', 'PRE']}]
+# 4 dimension examples
+# dim_value=[{'value': ['WIN', 'TMP']},{'value': ['PRSS', 'HEIGHT']}]
 # without geocoordinate
 np2tif(nc_t, 'constant_masks/upper', dim_value=dim)
 # with geocoordinate
