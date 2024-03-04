@@ -20,11 +20,9 @@ class Cache:
                         self.cache_L.release()
                         return result
                 else:
-                    self.cache_L.release()
                     break
                 self.cache_L.release()
                 time.sleep(0.5)
-            self.cache_L.acquire()
             self.__add_key(key)
             self.cache_L.release()
             return False
