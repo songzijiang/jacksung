@@ -11,29 +11,37 @@ class Cache:
 
     # 判断key是否在缓存中，在则返回key对应的值，否则返回False, 同时锁住该key的所有查询，直到被放入数据
     def get_key_in_cache(self, key):
-        if key in self.cache_list:
+        try:
             while True:
                 self.cache_L.acquire()
-                if self.cache[key] and self.cache[key].is_ok:
-                    result = self.cache[key].value
+                if key in self.cache_list:
+                    if self.cache[key].is_ok:
+                        result = self.cache[key].value
+                        self.cache_L.release()
+                        return result
+                else:
                     self.cache_L.release()
-                    return result
+                    break
                 self.cache_L.release()
                 time.sleep(0.5)
-        else:
             self.cache_L.acquire()
             self.__add_key(key)
             self.cache_L.release()
             return False
+        except Exception as e:
+            self.cache_L.release()
+            raise e
 
     def add_key(self, key, value):
-        self.cache_L.acquire()
-        if key in self.cache_list:
+        try:
+            self.cache_L.acquire()
+            if key not in self.cache_list:
+                self.__add_key(key)
             self.cache[key].set_value(value)
-        else:
-            self.__add_key(key)
-            self.cache[key].set_value(value)
-        self.cache_L.release()
+            self.cache_L.release()
+        except Exception as e:
+            self.cache_L.release()
+            raise e
 
     def __add_key(self, key):
         self.cache_list.append(key)
