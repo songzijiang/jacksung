@@ -29,7 +29,12 @@ p.s. chrome should be installed first,
 4 run cmd
 ```ecnu_login -u 账号 -p 密码```
 Or
-set the username and password in ~/.ecnu_login and run cmd ```ecnu_login```
+set the username and password in ~/.ecnu_login
+```
+u: 账户
+p: 密码
+```
+and then run cmd ```ecnu_login```
 Or using python code:
 ```
 from jacksung.utils.login import ecnu_login
