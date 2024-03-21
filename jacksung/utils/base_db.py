@@ -12,7 +12,7 @@ import configparser
 
 
 def convert_str(s):
-    return "'" + s.replace("'", '"') + "'"
+    return "'" + str(s).replace("'", '"') + "'"
 
 
 def convert_num(n):
