@@ -36,7 +36,7 @@ def border(img, point1, point2, color=(0, 0, 255), border=5):
     return img
 
 
-def make_block(h, w, color=(255, 255, 255), dtype=np.float32):
+def make_block(h, w, color=(255, 255, 255), dtype=np.int32):
     return np.array([[color for _ in range(w)] for _ in range(h)], dtype=dtype)
 
 
