@@ -18,9 +18,9 @@ p.s. chrome should be installed first,
 
 2 make the directory 'chrome' in the home path
 
-3 put the driver file, and make a new directory 'tmp' in the 'chrome' directory. The structure of directory:
+3 put the driver file, and make a new directory 'tmp' in the 'chrome' directory (i.e., ~/chrome/chromedriver.exe and ~/chrome/tmp). The structure of directory:
 ```
---home
+--Home directory
 --|--chrome
 --|--|--chromedriver.exe
 --|--|--tmp
@@ -28,7 +28,13 @@ p.s. chrome should be installed first,
 
 4 run cmd
 ```ecnu_login -u 账号 -p 密码```
-
+Or
+set the username and password in ~/.ecnu_login
+```
+u: 账户
+p: 密码
+```
+and then run cmd ```ecnu_login```
 Or using python code:
 ```
 from jacksung.utils.login import ecnu_login
