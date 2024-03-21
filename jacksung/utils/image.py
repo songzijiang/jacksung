@@ -12,6 +12,30 @@ def draw_text(img, xy, font, text):
     return image
 
 
+def _check_border(in_n, n):
+    if in_n < 0:
+        return 0
+    if in_n > n:
+        return n
+    return in_n
+
+
+def border(img, point1, point2, color=(0, 0, 255), border=5):
+    point1_h, point1_w = point1
+    point2_h, point2_w = point2
+    h, w, _ = img.shape
+    img[_check_border(point1_h - border // 2, h):    _check_border(point1_h + border // 2, h),
+    _check_border(point1_w - border // 2, w):    _check_border(point2_w + border // 2, w), :] = color
+    img[_check_border(point2_h - border // 2, h):    _check_border(point2_h + border // 2, h),
+    _check_border(point1_w - border // 2, w):    _check_border(point2_w + border // 2, w), :] = color
+    img[_check_border(point1_h - border // 2, h):    _check_border(point2_h + border // 2, h),
+    _check_border(point1_w - border // 2, w):    _check_border(point1_w + border // 2, w), :] = color
+    img[_check_border(point1_h - border // 2, h):    _check_border(point2_h + border // 2, h),
+    _check_border(point2_w - border // 2, w):    _check_border(point2_w + border // 2, w), :] = color
+
+    return img
+
+
 def make_block(h, w, color=(255, 255, 255)):
     return np.array([[color for _ in range(w)] for _ in range(h)])
 
