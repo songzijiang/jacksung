@@ -3,7 +3,8 @@ from PIL import Image, ImageFont, ImageDraw
 import numpy as np
 
 
-def get_pixel_by_coord(img, left, top, x_res, y_res, x, y):
+def get_pixel_by_coord(img, coord, x, y):
+    left, top, x_res, y_res = coord.left, coord.top, coord.x_res, coord.y_res
     if x < left or y > top:
         raise Exception('x or y is lower than border!')
     s = img.shape
