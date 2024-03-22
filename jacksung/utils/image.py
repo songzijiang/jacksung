@@ -3,6 +3,15 @@ from PIL import Image, ImageFont, ImageDraw
 import numpy as np
 
 
+def get_pixel_by_coord(img, left, top, x_res, y_res, x, y):
+    if x < left or y > top:
+        raise Exception('x or y is lower than border!')
+    s = img.shape
+    if x > left + s[-2] * x_res or y < top - s[-1] * y_res:
+        raise Exception('x or y is greater than border!')
+    return img[..., int((x - left) // x_res), int((top - y) // y_res)]
+
+
 def draw_text(img, xy, font, text):
     # font = ImageFont.truetype(r'arial.ttf', 35)
     im = Image.fromarray(img.astype(np.uint8))
@@ -76,3 +85,8 @@ def concatenate_images(imgs, direction="h"):
     else:
         raise ValueError("Invalid direction. Please choose 'h' or 'v'.")
     return new_img
+
+
+if __name__ == '__main__':
+    data = np.arange(0, 100).reshape((10, 10))
+    print(get_pixel_by_coord(data, 0, 90, 0.25, 0.25, 2.49, 87.6))

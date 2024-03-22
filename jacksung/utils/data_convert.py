@@ -7,6 +7,14 @@ from rasterio.transform import from_origin
 import netCDF4 as nc
 
 
+class Coordinate:
+    def __init__(self, left, top, x_res, y_res):
+        self.left = left
+        self.top = top
+        self.x_res = x_res
+        self.y_res = y_res
+
+
 def dms_to_d10(data):
     d, m, s = float(data[0]), float(data[1]), float(data[2])
     return d + 1 / 60 * m + 1 / 60 / 60 * s
@@ -47,8 +55,8 @@ def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None
         print(f"TIFF image saved as '{save_path}'")
 
 
-def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, y_res=None, dtype=None,
-           dim_value=None):
+def np2tif(input_data, save_path='np2tif_dir', out_name='', left=None, top=None, x_res=None, y_res=None, dtype=None,
+           dim_value=None, coord=None):
     if type(input_data) == str:
         np_data = np.load(input_data)
     else:
@@ -62,6 +70,9 @@ def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, 
     np_data = rearrange(np_data, mode_str)
     if left is not None and top is not None:
         coordinate = (left, top)
+    elif coord is not None:
+        coordinate = (coord.left, coord.top)
+        x_res, y_res = coord.x_res, coord.y_res
     else:
         coordinate = None
     for idx, single_np in enumerate(np_data):
@@ -78,6 +89,11 @@ def np2tif(input_data, save_path, out_name='', left=None, top=None, x_res=None, 
             idx_tmp -= temp * np.prod(shape[s + 1:-2], axis=None)
         name = out_name + name + '.tif'
         _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
+
+
+def nc2tif(input_data, save_path='np2tif_dir', lock=None):
+    np_data, dim_value = nc2np(input_data, lock)
+    np2tif(np_data, save_path, dim_value=dim_value)
 
 
 def nc2np(input_data, lock=None):
