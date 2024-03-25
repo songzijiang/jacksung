@@ -4,6 +4,22 @@ import numpy.lib.format
 import struct
 
 
+class Add():
+    def __init__(self):
+        self.datas = None
+        self.count = 0
+
+    def add(self, np_data):
+        if self.datas is None:
+            self.datas = np_data.astype(np.float64)
+        else:
+            self.datas += np_data.astype(np.float64)
+        self.count += 1
+
+    def get_mean(self):
+        return self.datas / self.count
+
+
 def save(file, array):
     magic_string = b"\x93NUMPY\x01\x00v\x00"
     header = bytes(("{'descr': '" + array.dtype.descr[0][1] + "', 'fortran_order': False, 'shape': " + str(

@@ -2,6 +2,11 @@ import time
 from datetime import datetime
 import pytz
 from jacksung.utils.log import oprint
+import calendar
+
+
+def get_days_in_month(year, month):
+    return calendar.monthrange(year, month)[1]
 
 
 def cal_time(fun_str):

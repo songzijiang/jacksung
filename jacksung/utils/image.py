@@ -6,10 +6,12 @@ import numpy as np
 def get_pixel_by_coord(img, coord, x, y):
     left, top, x_res, y_res = coord.left, coord.top, coord.x_res, coord.y_res
     if x < left or y > top:
-        raise Exception('x or y is lower than border!')
+        raise Exception(f'x:{x} or y:{y} is lower than border {left},{top}!'
+                        f'left:{left}, top:{top},x_res:{x_res}, y_res:{y_res}.')
     s = img.shape
-    if x > left + s[-2] * x_res or y < top - s[-1] * y_res:
-        raise Exception('x or y is greater than border!')
+    if x > left + s[-1] * x_res or y < top - s[-2] * y_res:
+        raise Exception(f'x:{x} or y:{y} is greater than border {left + s[-1] * x_res},{top - s[-2] * y_res}!'
+                        f'left:{left}, top:{top},x_res:{x_res}, y_res:{y_res}.')
     return img[..., int((x - left) // x_res), int((top - y) // y_res)]
 
 
