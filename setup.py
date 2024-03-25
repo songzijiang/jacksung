@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jacksung',
-    version='0.0.2.95',
+    version='0.0.2.96',
     author='Zijiang Song',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

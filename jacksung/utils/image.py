@@ -1,6 +1,7 @@
 import cv2
 from PIL import Image, ImageFont, ImageDraw
 import numpy as np
+from data_convert import Coordinate
 
 
 def get_pixel_by_coord(img, coord, x, y):
@@ -12,7 +13,7 @@ def get_pixel_by_coord(img, coord, x, y):
     if x > left + s[-1] * x_res or y < top - s[-2] * y_res:
         raise Exception(f'x:{x} or y:{y} is greater than border {left + s[-1] * x_res},{top - s[-2] * y_res}!'
                         f'left:{left}, top:{top},x_res:{x_res}, y_res:{y_res}.')
-    return img[..., int((x - left) // x_res), int((top - y) // y_res)]
+    return img[..., int((top - y) // y_res), int((x - left) // x_res)]
 
 
 def draw_text(img, xy, font, text):
@@ -91,5 +92,7 @@ def concatenate_images(imgs, direction="h"):
 
 
 if __name__ == '__main__':
-    data = np.arange(0, 100).reshape((10, 10))
-    print(get_pixel_by_coord(data, 0, 90, 0.25, 0.25, 2.49, 87.6))
+    data = np.arange(0, 50).reshape((10, 5))
+    coord = Coordinate(0, 90, 0.25, 0.25)
+    print(data)
+    print(get_pixel_by_coord(data, coord, 0.76, 87.6))
