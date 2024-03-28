@@ -80,4 +80,6 @@ class LogClass:
                 print("Cloud Log Error")
 
 
-
+if __name__ == '__main__':
+    sys.stdout = StdLog(filename='log.txt', common_path='warning.txt')
+    oprint('this is a log')
