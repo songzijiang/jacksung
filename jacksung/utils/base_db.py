@@ -58,7 +58,11 @@ class BaseDB:
         except Exception as e:
             self.conn = self.reconnect()
             cursor = self.conn.cursor()
-            result = cursor.execute(sql)
+            try:
+                result = cursor.execute(sql)
+            except Exception as e:
+                print(f'err SQL: {sql}')
+                raise e
         finally:
             if cursor:
                 cursor.close()
