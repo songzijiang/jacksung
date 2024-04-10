@@ -1,7 +1,7 @@
 import cv2
 from PIL import Image, ImageFont, ImageDraw
 import numpy as np
-from data_convert import Coordinate
+from jacksung.utils.data_convert import Coordinate
 
 
 def get_pixel_by_coord(img, coord, x, y):

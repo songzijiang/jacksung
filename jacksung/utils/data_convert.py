@@ -50,7 +50,7 @@ def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None
         print(f"GeoTIFF '{save_path}' generated with geographic coordinates.")
     else:
         # 将数据写入TIFF文件
-        with rasterio.open(save_path, "w", width=w, height=h, count=1, dtype=np_data.dtype) as dst:
+        with rasterio.open(save_path, "w", width=w, height=h, count=1, dtype=dtype if dtype else np_data.dtype) as dst:
             dst.write(np_data, 1)
         print(f"TIFF image saved as '{save_path}'")
 
