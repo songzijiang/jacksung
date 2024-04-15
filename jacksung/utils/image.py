@@ -16,11 +16,11 @@ def get_pixel_by_coord(img, coord, x, y):
     return img[..., int((top - y) // y_res), int((x - left) // x_res)]
 
 
-def draw_text(img, xy, font, text):
+def draw_text(img, xy, font, text, color=(0, 0, 0)):
     # font = ImageFont.truetype(r'arial.ttf', 35)
     im = Image.fromarray(img.astype(np.uint8))
     draw = ImageDraw.Draw(im)
-    draw.text(xy, text, font=font, fill=(0, 0, 0))
+    draw.text(xy, text, font=font, fill=color)
     image = np.array(im)
     return image
 
