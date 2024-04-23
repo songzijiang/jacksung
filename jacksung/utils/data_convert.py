@@ -34,7 +34,7 @@ def make_dms(s):
     return result
 
 
-def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None):
+def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None, print_log=True):
     h, w = np_data.shape
     os.makedirs(output_dir, exist_ok=True)
     save_path = os.path.join(output_dir, out_name)
@@ -47,16 +47,18 @@ def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None
         with rasterio.open(save_path, "w", driver="GTiff", width=w, height=h, count=1,
                            dtype=dtype if dtype else np_data.dtype, crs="EPSG:4326", transform=transform) as dst:
             dst.write(np_data, 1)
-        print(f"GeoTIFF '{save_path}' generated with geographic coordinates.")
+        if print_log:
+            print(f"GeoTIFF '{save_path}' generated with geographic coordinates.")
     else:
         # 将数据写入TIFF文件
         with rasterio.open(save_path, "w", width=w, height=h, count=1, dtype=dtype if dtype else np_data.dtype) as dst:
             dst.write(np_data, 1)
-        print(f"TIFF image saved as '{save_path}'")
+        if print_log:
+            print(f"TIFF image saved as '{save_path}'")
 
 
 def np2tif(input_data, save_path='np2tif_dir', out_name='', left=None, top=None, x_res=None, y_res=None, dtype=None,
-           dim_value=None, coord=None):
+           dim_value=None, coord=None, print_log=True):
     if type(input_data) == str:
         np_data = np.load(input_data)
     else:
@@ -88,7 +90,8 @@ def np2tif(input_data, save_path='np2tif_dir', out_name='', left=None, top=None,
             name += plus_name
             idx_tmp -= temp * np.prod(shape[s + 1:-2], axis=None)
         name = out_name + name + '.tif'
-        _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype)
+        _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype,
+                     print_log=print_log)
 
 
 def nc2tif(input_data, save_path='np2tif_dir', lock=None):
