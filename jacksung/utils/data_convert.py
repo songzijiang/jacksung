@@ -8,11 +8,17 @@ import netCDF4 as nc
 
 
 class Coordinate:
-    def __init__(self, left, top, x_res, y_res):
+    def __init__(self, left, top, x_res=None, y_res=None, right=None, bottom=None, h=None, w=None):
         self.left = left
         self.top = top
         self.x_res = x_res
         self.y_res = y_res
+        if x_res is None and right is not None and w is not None:
+            self.x_res = (right - left) / w
+        if y_res is None and bottom is not None and h is not None:
+            self.y_res = (top - bottom) / h
+        if self.x_res is None or self.y_res is None or self.left is None or self.top is None:
+            raise Exception(f'None parameter x_res, y_res, left, top: {self.x_res},{self.y_res},{self.left},{self.top}')
 
 
 def dms_to_d10(data):
