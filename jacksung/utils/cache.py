@@ -25,7 +25,7 @@ class Cache:
                 time.sleep(0.5)
             self.__add_key(key)
             self.cache_L.release()
-            return False
+            return None
         except Exception as e:
             self.cache_L.release()
             raise e
