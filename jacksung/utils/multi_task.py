@@ -1,6 +1,8 @@
 import concurrent.futures
 import threading
 import multiprocessing
+import time
+
 from tqdm import tqdm
 
 type_thread = concurrent.futures.ThreadPoolExecutor
@@ -15,7 +17,7 @@ def init(tl, pl):
 
 
 class MultiTasks:
-    def __init__(self, threads=10, pool=type_thread, desc="Multi Progress"):
+    def __init__(self, threads=10, pool=type_thread, desc="Mult. Prog."):
         self.pool = pool
         self.threads = threads
         self.task_list = {}
@@ -48,3 +50,36 @@ class MultiTasks:
                 if print_percent:
                     progress_bar.update(1)
         return self.results
+
+
+class Thread:
+    def __init__(self, function, args):
+        self.function = function
+        self.args = args
+        self.t = threading.Thread(target=self.__fun)
+        self.result_status = False
+        self.result = None
+
+    def __fun(self):
+        self.result = self.function(*self.args)
+        self.result_status = True
+
+    def start(self):
+        self.t.start()
+
+    def get_result(self, time_out_seconds=None):
+        self.t.join(time_out_seconds)
+        return self.result
+
+
+def worker(times):
+    for i in range(times):
+        print(i)
+        time.sleep(1)
+    return 'OK'
+
+
+if __name__ == '__main__':
+    t = Thread(worker, (5,))
+    t.start()
+    print(t.get_result())
