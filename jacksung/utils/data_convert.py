@@ -105,7 +105,7 @@ def nc2tif(input_data, save_path='np2tif_dir', lock=None):
     np2tif(np_data, save_path, dim_value=dim_value)
 
 
-def nc2np(input_data, lock=None):
+def nc2np(input_data, lock=None, return_dim=True):
     if type(input_data) == str:
         if lock:
             lock.acquire()
@@ -134,8 +134,12 @@ def nc2np(input_data, lock=None):
         value_idx += 1
     value_key = 'value' + str(value_idx)
     dimensions[value_key] = vars
-    np_idx = [value_key] + list(nc_data[var].dimensions)
-    return np_data, [{'dim_name': key, 'value': dimensions[key]} for key in np_idx]
+    if return_dim:
+        np_idx = [value_key] + list(nc_data[var].dimensions)
+        dim_value = [{'dim_name': key, 'value': dimensions[key]} for key in np_idx]
+    else:
+        dim_value = None
+    return np_data, dim_value
 
 
 if __name__ == '__main__':

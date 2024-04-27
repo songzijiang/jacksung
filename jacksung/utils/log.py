@@ -18,14 +18,6 @@ def oprint(*args):
     print(log)
 
 
-_print = print
-
-
-def print(*args, **kwargs):
-    _print(*args, **kwargs)
-    return print
-
-
 def thread_send_log(url, content, name):
     threadLock.acquire()
     content = quote(content, 'utf-8')

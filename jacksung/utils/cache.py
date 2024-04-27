@@ -57,3 +57,10 @@ class Cache:
         def set_value(self, value):
             self.value = value
             self.is_ok = True
+
+
+if __name__ == '__main__':
+    cache = Cache(10)
+    print(cache.get_key_in_cache('a'))
+    cache.add_key('a', 1)
+    print(cache.get_key_in_cache('a'))
