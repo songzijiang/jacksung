@@ -37,6 +37,7 @@ class Cache:
                 self.__add_key(key)
             self.cache[key].set_value(value)
             self.cache_L.release()
+            return value
         except Exception as e:
             self.cache_L.release()
             raise e
