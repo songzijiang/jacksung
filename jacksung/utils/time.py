@@ -66,3 +66,21 @@ class Stopwatch:
 
     def pinch(self, format_type='{:>5.1f}s'):
         return format_type.format(time.time() - self.start_time)
+
+
+def getHumanSize(in_size):
+    unit = 'B'
+    if in_size >= 1024:
+        in_size /= 1024
+        unit = 'K'
+    if in_size >= 1024:
+        in_size /= 1024
+        unit = 'M'
+    if in_size >= 1024:
+        in_size /= 1024
+        unit = 'G'
+    return f'{round(in_size, 2)} {unit}'
+
+
+if __name__ == '__main__':
+    print(getHumanSize(1023))

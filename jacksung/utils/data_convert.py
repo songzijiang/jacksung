@@ -13,6 +13,10 @@ class Coordinate:
         self.top = top
         self.x_res = x_res
         self.y_res = y_res
+        self.h = h
+        self.w = w
+        self.right = right
+        self.bottom = bottom
         if x_res is None and right is not None and w is not None:
             self.x_res = (right - left) / w
         if y_res is None and bottom is not None and h is not None:
