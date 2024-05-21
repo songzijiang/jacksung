@@ -143,6 +143,8 @@ def nc2np(input_data, lock=None, return_dim=True):
         dim_value = [{'dim_name': key, 'value': dimensions[key]} for key in np_idx]
     else:
         dim_value = None
+    if type(input_data) == str:
+        nc_data.close()
     return np_data, dim_value
 
 

@@ -31,6 +31,7 @@ class MultiTasks:
         self.executor = self.pool(max_workers=self.threads, initializer=init,
                                   initargs=(self.thread_mutex, self.process_mutex))
         self.desc = desc
+        self.progress_bar = None
 
     def add_task(self, k, function, args):
         self.task_list[k] = (function, args)
@@ -41,15 +42,32 @@ class MultiTasks:
             if save:
                 self.features[k] = r
 
+    def wrap_fun(self, fun, args):
+        fun(*args)
+        if self.progress_bar:
+            self.progress_bar.update(1)
+
     def execute_task(self, print_percent=True, desc=None):
         with self.pool(max_workers=self.threads, initializer=init,
                        initargs=(self.thread_mutex, self.process_mutex)) as executor:
-            for k, f_and_a in self.task_list.items():
-                self.features[k] = executor.submit(f_and_a[0], *f_and_a[1])
             if print_percent:
-                progress_bar = tqdm(total=len(self.features), desc=desc if desc else self.desc)
+                self.progress_bar = tqdm(total=len(self.task_list.items()), desc=desc if desc else self.desc)
+            else:
+                self.progress_bar = None
+            for k, f_and_a in self.task_list.items():
+                self.features[k] = executor.submit(self.wrap_fun, *(f_and_a[0], f_and_a[1]))
             for k, feature in self.features.items():
                 self.results[k] = feature.result()
-                if print_percent:
-                    progress_bar.update(1)
         return self.results
+
+
+def worker(i):
+    print(i)
+    time.sleep(1)
+
+
+if __name__ == '__main__':
+    mt = MultiTasks(10)
+    for i in range(100):
+        mt.add_task(i, worker, [i])
+    mt.execute_task(print_percent=False)
