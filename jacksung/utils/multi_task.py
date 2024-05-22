@@ -43,9 +43,10 @@ class MultiTasks:
                 self.features[k] = r
 
     def wrap_fun(self, fun, args):
-        fun(*args)
+        result = fun(*args)
         if self.progress_bar:
             self.progress_bar.update(1)
+        return result
 
     def execute_task(self, print_percent=True, desc=None):
         with self.pool(max_workers=self.threads, initializer=init,
