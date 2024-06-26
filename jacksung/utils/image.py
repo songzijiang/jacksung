@@ -72,7 +72,10 @@ def concatenate_images(imgs, direction="h"):
         # 水平拼接，高度不变，宽度为所有图片宽度之和
         max_height = max(heights)
         total_width = sum(widths)
-        new_img = np.zeros((max_height, total_width, 3), dtype=np.uint8)
+        if imgs[0].ndim == 2:
+            new_img = np.zeros((max_height, total_width), dtype=np.uint8)
+        else:
+            new_img = np.zeros((max_height, total_width, 3), dtype=np.uint8)
         x_offset = 0
         for img in imgs:
             new_img[:, x_offset:x_offset + img.shape[1]] = img
@@ -81,7 +84,10 @@ def concatenate_images(imgs, direction="h"):
         # 垂直拼接，宽度不变，高度为所有图片高度之和
         max_width = max(widths)
         total_height = sum(heights)
-        new_img = np.zeros((total_height, max_width, 3), dtype=np.uint8)
+        if imgs[0].ndim == 2:
+            new_img = np.zeros((total_height, max_width), dtype=np.uint8)
+        else:
+            new_img = np.zeros((total_height, max_width, 3), dtype=np.uint8)
         y_offset = 0
         for img in imgs:
             new_img[y_offset:y_offset + img.shape[0], :] = img
