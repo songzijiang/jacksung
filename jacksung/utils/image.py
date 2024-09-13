@@ -2,6 +2,7 @@ import cv2
 from PIL import Image, ImageFont, ImageDraw
 import numpy as np
 from jacksung.utils.data_convert import Coordinate
+import os
 
 
 def get_pixel_by_coord(img, coord, x, y):
@@ -16,8 +17,7 @@ def get_pixel_by_coord(img, coord, x, y):
     return img[..., int((top - y) // y_res), int((x - left) // x_res)]
 
 
-def draw_text(img, xy, font, text, color=(0, 0, 0)):
-    # font = ImageFont.truetype(r'arial.ttf', 35)
+def draw_text(img, xy, font=ImageFont.truetype(r'times.ttf', 35), text='test text', color=(0, 0, 0)):
     im = Image.fromarray(img.astype(np.uint8))
     draw = ImageDraw.Draw(im)
     draw.text(xy, text, font=font, fill=color)
@@ -97,8 +97,28 @@ def concatenate_images(imgs, direction="h"):
     return new_img
 
 
+def create_gif(images_in, output_path, duration=500, idx=None):
+    images = []
+    if type(images_in) == str:
+        for file_name in sorted(os.listdir(images_in)):
+            # if file_name.endswith('.png'):
+            file_path = os.path.join(images_in, file_name)
+            images.append(Image.open(file_path))
+    else:
+        for img in images_in:
+            images.append(Image.fromarray(cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2RGB)))
+    if idx is not None:
+        images = images[idx[0]:idx[1]]
+    images[0].save(output_path, save_all=True, append_images=images[1:], duration=duration, loop=0)
+
+
 if __name__ == '__main__':
-    data = np.arange(0, 50).reshape((10, 5))
-    coord = Coordinate(0, 90, 0.25, 0.25)
-    print(data)
-    print(get_pixel_by_coord(data, coord, 0.76, 87.6))
+    img_path = r'C:\Users\ECNU\Desktop\240808\pred\15\predict'
+    images_in = []
+    for file_name in sorted(os.listdir(img_path)):
+        # if file_name.endswith('.png'):
+        file_path = os.path.join(img_path, file_name)
+        img = cv2.imread(file_path, -1)
+        img = (img - np.min(img)) / (np.max(img) - np.min(img)) * 255
+        images_in.append(img)
+    create_gif(images_in, r'C:\Users\ECNU\Desktop\240808\pred\15\predict.gif', duration=100)
