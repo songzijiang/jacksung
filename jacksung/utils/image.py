@@ -119,6 +119,16 @@ def create_gif(images_in, output_path, duration=500, idx=None):
     images[0].save(output_path, save_all=True, append_images=images[1:], duration=duration, loop=0)
 
 
+def zoom_image(image, scale_factor=2):
+    # 获取图像的尺寸
+    height, width = image.shape[:2]
+    # 计算缩放后的尺寸
+    new_dimensions = (int(width * scale_factor), int(height * scale_factor))
+    # 使用cv2.resize进行缩放
+    zoomed_image = cv2.resize(image, new_dimensions, interpolation=cv2.INTER_LINEAR)
+    return zoomed_image
+
+
 if __name__ == '__main__':
     path = r'D:\python_Project\FYpredict\metrics\make_figure\band_metrics.png'
     crop_png(path, right_margin=50)
