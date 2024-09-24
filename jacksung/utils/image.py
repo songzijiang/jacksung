@@ -53,9 +53,16 @@ def make_block(h, w, color=(255, 255, 255), dtype=np.int32):
     return np.array([[color for _ in range(w)] for _ in range(h)], dtype=dtype)
 
 
-def crop_png(input_path, left, top, right, bottom):
+def crop_png(input_path, left=0, top=0, right=None, bottom=None, right_margin=0, bottom_margin=0):
     # 打开 PNG 图像
     image = Image.open(input_path)
+    width, height = image.size
+    if right is None:
+        right = width
+    if bottom is None:
+        bottom = height
+    right -= right_margin
+    bottom -= bottom_margin
     # 对图像进行裁剪
     cropped_image = image.crop((left, top, right, bottom))
     # 保存裁剪后的图像
@@ -113,12 +120,5 @@ def create_gif(images_in, output_path, duration=500, idx=None):
 
 
 if __name__ == '__main__':
-    img_path = r'C:\Users\ECNU\Desktop\240808\pred\15\predict'
-    images_in = []
-    for file_name in sorted(os.listdir(img_path)):
-        # if file_name.endswith('.png'):
-        file_path = os.path.join(img_path, file_name)
-        img = cv2.imread(file_path, -1)
-        img = (img - np.min(img)) / (np.max(img) - np.min(img)) * 255
-        images_in.append(img)
-    create_gif(images_in, r'C:\Users\ECNU\Desktop\240808\pred\15\predict.gif', duration=100)
+    path = r'D:\python_Project\FYpredict\metrics\make_figure\band_metrics.png'
+    crop_png(path, right_margin=50)
