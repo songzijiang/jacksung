@@ -17,7 +17,12 @@ def get_pixel_by_coord(img, coord, x, y):
     return img[..., int((top - y) // y_res), int((x - left) // x_res)]
 
 
-def draw_text(img, xy, font=ImageFont.truetype(r'times.ttf', 35), text='test text', color=(0, 0, 0)):
+def draw_text(img, xy, font=None, text='test text', color=(0, 0, 0)):
+    if font is None:
+        try:
+            font = ImageFont.truetype(r'times.ttf', 35)
+        except:
+            font = ImageFont.load_default()
     im = Image.fromarray(img.astype(np.uint8))
     draw = ImageDraw.Draw(im)
     draw.text(xy, text, font=font, fill=color)
@@ -127,6 +132,20 @@ def zoom_image(image, scale_factor=2):
     # 使用cv2.resize进行缩放
     zoomed_image = cv2.resize(image, new_dimensions, interpolation=cv2.INTER_LINEAR)
     return zoomed_image
+
+
+def zoomAndDock(img, zoom_rectangle, docker, scale_factor=2, border=10):
+    corp_png = img[zoom_rectangle[1]:zoom_rectangle[1] + zoom_rectangle[3],
+               zoom_rectangle[0]:zoom_rectangle[0] + zoom_rectangle[2], :]
+    corp_png = zoom_image(corp_png, scale_factor=scale_factor)
+    cv2.rectangle(img, (zoom_rectangle[0], zoom_rectangle[1]),
+                  (zoom_rectangle[0] + zoom_rectangle[2], zoom_rectangle[1] + zoom_rectangle[3]), (0, 0, 255), border)
+    corp_png[:, 0:border, :] = [0, 0, 0]
+    corp_png[:, corp_png.shape[1] - border:corp_png.shape[1], :] = [0, 0, 0]
+    corp_png[0:border, :, :] = [0, 0, 0]
+    corp_png[corp_png.shape[0] - border:corp_png.shape[0], :, :] = [0, 0, 0]
+    img[docker[0]:docker[0] + corp_png.shape[0], docker[1]:docker[1] + corp_png.shape[1], :] = corp_png
+    return img
 
 
 if __name__ == '__main__':
