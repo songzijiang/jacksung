@@ -78,8 +78,9 @@ class ecnu_login:
             password_ele = driver.find_element(By.ID, "password")
             username_ele.send_keys(username)
             password_ele.send_keys(password)
-
-            driver.find_element(By.ID, 'login-account').click()
+            # driver.find_element(By.ID, 'login-account').click()
+            button = driver.find_element(By.ID, 'login-account')
+            driver.execute_script("arguments[0].click();", button)
             time.sleep(2)
             try:
                 ipv4 = driver.find_element(By.ID, 'ipv4')
