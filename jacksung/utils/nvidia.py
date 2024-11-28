@@ -58,8 +58,8 @@ def main():
     pid_idx = 0
     for i in range(len(lines)):
         if not lines[i].startswith("| Processes:"):
-            if lines[i].count('MIG M.') > 0 or lines[i].count('N/A') > 0:
-                continue
+            # if lines[i].count('MIG M.') > 0 or lines[i].count('N/A') > 0:
+            #     continue
             lines_to_print.append(lines[i].rstrip())
         else:
             pid_idx = i + 3

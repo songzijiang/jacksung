@@ -14,9 +14,11 @@ class Cache:
         try:
             while True:
                 self.cache_L.acquire()
-                if key in self.cache_list:
+                if key in self.cache.keys():
                     if self.cache[key].is_ok:
                         result = self.cache[key].value
+                        self.cache_list.remove(key)
+                        self.cache_list.append(key)
                         self.cache_L.release()
                         return result
                 else:
@@ -33,7 +35,7 @@ class Cache:
     def add_key(self, key, value):
         try:
             self.cache_L.acquire()
-            if key not in self.cache_list:
+            if key not in self.cache.keys():
                 self.__add_key(key)
             self.cache[key].set_value(value)
             self.cache_L.release()
@@ -61,7 +63,9 @@ class Cache:
 
 
 if __name__ == '__main__':
-    cache = Cache(10)
-    print(cache.get_key_in_cache('a'))
+    cache = Cache(2)
     cache.add_key('a', 1)
+    cache.add_key('b', 2)
     print(cache.get_key_in_cache('a'))
+    cache.add_key('c', 3)
+    print(cache)
