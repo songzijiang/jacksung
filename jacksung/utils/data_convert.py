@@ -148,6 +148,13 @@ def nc2np(input_data, lock=None, return_dim=True):
     return np_data, dim_value
 
 
+def add_None(a, b):
+    if a is None:
+        return b
+    else:
+        return a + b
+
+
 if __name__ == '__main__':
     np_data, dim = nc2np(r'C:\Users\jackSung\Desktop\download.nc')
     np2tif(np_data, 'com', dim_value=dim)
