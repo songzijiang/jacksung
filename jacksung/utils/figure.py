@@ -75,28 +75,28 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200):
     return colors_map
 
 
-def make_fig(file_np, file_title='', save_name='img1.png',
-             # 色带范围,请给出实际的数据范围
-             # color=((0, '#1E90FF'), (2, '#1874CD'), (5, '#3A5FCD'), (10, '#0000CD'), (30, '#9400D3')),
-             colors=None,
-             # [经度起,经度止,经度步长],[纬度起,纬度止,纬度步长]
-             # np数据会自动填充整个图形,确保数据范围和area范围一致
-             area=((100, 140, 10), (20, 60, 10)),
-             # 字体大小
-             font_size=15,
-             # 放大区域
-             zoom_rectangle=(310 * 5, 300 * 5, 50 * 5, 40 * 5),
-             # 放大区域停靠位置
-             docker=(300, 730),
-             # 图片清晰度
-             dpi=500,
-             # 添加各种特征
-             # 自然海岸界,其他自带要素的参考cartopy
-             # '10m', '50m', or '110m'
-             up_features=(cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='black', facecolor='none',
-                                                       linewidth=0.4),),
-             down_features=(cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
-             border=None):
+def _make_fig(file_np,
+              # [经度起,经度止,经度步长],[纬度起,纬度止,纬度步长]
+              # np数据会自动填充整个图形,确保数据范围和area范围一致
+              area, file_title='', save_name='img1.png',
+              # 色带范围,请给出实际的数据范围
+              # color=((0, '#1E90FF'), (2, '#1874CD'), (5, '#3A5FCD'), (10, '#0000CD'), (30, '#9400D3')),
+              colors=None,
+              # 字体大小
+              font_size=15,
+              # 放大区域
+              zoom_rectangle=(310 * 5, 300 * 5, 50 * 5, 40 * 5),
+              # 放大区域停靠位置
+              zoom_docker=(300, 730),
+              # 图片清晰度
+              dpi=500,
+              # 添加各种特征
+              # 自然海岸界,其他自带要素的参考cartopy
+              # '10m', '50m', or '110m'
+              features=(
+                      cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='black', facecolor='none',
+                                                   linewidth=0.4), cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
+              border_type=None):
     # corp = [92, 31, 542, 456]
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     # 设置经纬度范围,限定为中国
@@ -114,15 +114,13 @@ def make_fig(file_np, file_title='', save_name='img1.png',
     # 用色带给数据上色,输入单通道,返回三通道图
     elevation, new_colors = _get_color_normalization(file_np, colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
-    for feature in up_features:
+    for feature in features:
         ax.add_feature(feature)
     ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap)
-    for feature in down_features:
-        ax.add_feature(feature)
     # 添加网格线
-    if border is not None:
+    if border_type is not None:
         # ax.gridlines(line_style='--')
-        ax.gridlines(line_style=border)
+        ax.gridlines(line_style=border_type)
     # 设置大刻度和小刻度
     tick_proj = ccrs.PlateCarree()
     ax.set_xticks(np.arange(area[0][0], area[0][1] + 1, area[0][2]), crs=tick_proj)
@@ -139,7 +137,7 @@ def make_fig(file_np, file_title='', save_name='img1.png',
     plt.savefig(save_name)
     if zoom_rectangle is not None:
         read_png = cv2.imread(save_name)
-        read_png = zoomAndDock(read_png, zoom_rectangle, docker, scale_factor=5, border=14)
+        read_png = zoomAndDock(read_png, zoom_rectangle, zoom_docker, scale_factor=5, border=14)
         cv2.imwrite(save_name, read_png)
     np_data = cv2.imread(save_name) - 255
     np_sum_h = np.nonzero(np_data.sum(axis=(1, 2)))[0]
@@ -150,11 +148,28 @@ def make_fig(file_np, file_title='', save_name='img1.png',
     # plt.show()
 
 
-def make_fig_default(data, area, save_name='img1.png'):
-    colors = make_fig(data, save_name=save_name, area=area, zoom_rectangle=None)
+def make_fig(data,
+             area,
+             file_title='',
+             save_name='figure_default.png',
+             colors=None,
+             font_size=15,
+             zoom_rectangle=None,
+             zoom_docker=(300, 730),
+             dpi=500,
+             features=(
+                     cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='black', facecolor='none',
+                                                  linewidth=0.4), cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
+             border_type=None,
+             colormap_l_margin=300,
+             colormap_r_margin=200,
+             colormap_unit=''):
+    colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
+                       features=features, border_type=border_type,
+                       file_title=file_title, save_name=save_name, area=area, colors=colors)
     img = cv2.imread(save_name)
     h, w, c = img.shape
-    cm = make_color_map(colors, 180, w, unit='')
+    cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin)
     white_block = make_block(10, w)
     merge_img = concatenate_images([img, white_block, cm], direction='v')
     cv2.imwrite(save_name, merge_img)
@@ -162,5 +177,5 @@ def make_fig_default(data, area, save_name='img1.png'):
 
 if __name__ == '__main__':
     data = np.load(r'C:\Users\ECNU\Desktop\delete_me\20230101_00_400_400.npy')[-1]
-    data[data < 0.3] = np.nan
-    make_fig_default(data, area=((40, 120, 20), (20, 60, 20)))
+    data[data < 0.1] = np.nan
+    make_fig(data, area=((40, 120, 20), (20, 60, 20)))
