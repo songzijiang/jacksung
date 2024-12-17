@@ -20,7 +20,7 @@ def get_pixel_by_coord(img, coord, x, y):
 def draw_text(img, xy, font=None, text='test text', color=(0, 0, 0)):
     if font is None:
         try:
-            font = ImageFont.truetype(r'times.ttf', 35)
+            font = ImageFont.truetype(r'../libs/times.ttf', 35)
         except:
             font = ImageFont.load_default()
     im = Image.fromarray(img.astype(np.uint8))

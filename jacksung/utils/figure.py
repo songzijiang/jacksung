@@ -71,7 +71,7 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200):
             if i == 0:
                 text += unit
             colors_map = draw_text(colors_map, (i - 100 + l_margin, h - 150),
-                                   font=ImageFont.truetype(r'times.ttf', 150), text=text)
+                                   font=ImageFont.truetype(r'../libs/times.ttf', 150), text=text)
     return colors_map
 
 
