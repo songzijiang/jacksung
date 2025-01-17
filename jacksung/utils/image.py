@@ -22,6 +22,7 @@ def draw_text(img, xy, font=None, font_size=35, text='test text', color=(0, 0, 0
         try:
             font = ImageFont.truetype(r'../libs/times.ttf', font_size)
         except:
+            print('load times ttf failed, using the default font')
             font = ImageFont.load_default()
     im = Image.fromarray(img.astype(np.uint8))
     draw = ImageDraw.Draw(im)

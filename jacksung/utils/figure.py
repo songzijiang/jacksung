@@ -60,7 +60,7 @@ def _get_color_position(value, colors):
     return np.array((b, g, r))
 
 
-def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200):
+def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=150):
     colors_map = np.zeros((h, w, 3), dtype=np.uint8) + 255
     w = w - l_margin - r_margin
     for i in range(l_margin, w + l_margin):
@@ -72,7 +72,7 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200):
                 text += unit
             colors_map = draw_text(colors_map, (i - 100 + l_margin, h - 150),
                                    font=ImageFont.truetype(
-                                       rf'{os.path.abspath(os.path.dirname(__file__))}/../libs/times.ttf', 150),
+                                       rf'{os.path.abspath(os.path.dirname(__file__))}/../libs/times.ttf', font_size),
                                    text=text)
     return colors_map
 
