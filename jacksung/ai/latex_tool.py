@@ -6,7 +6,7 @@ from tqdm import tqdm
 def get_polish_prompt(content):
     polish_prompt = \
         f'''
-        Rewrite the following text in a different way, maintaining its original meaning but using alternative vocabulary and sentence structures:
+        Rewrite the following text in a different way, maintaining its original meaning but using alternative vocabulary and sentence structures in an academic style:
         Text:
         ---------
         {content}
@@ -29,7 +29,7 @@ def merge_content(tex_dir, main_tex):
                 sub_tex_path = os.path.join(tex_dir, line.split('{')[1].split('}')[0])
                 if not sub_tex_path.endswith('.tex'):
                     sub_tex_path += r'.tex'
-                result_tex += merge_content(tex_dir, sub_tex_path)
+                result_tex += merge_content(tex_dir, sub_tex_path) + '\n'
             else:
                 result_tex += line
     return result_tex
