@@ -50,7 +50,6 @@ def main():
     # parse the command length argument
     command_length = args.command_length
     color = args.color
-
     processes = subprocess.run('nvidia-smi', stdout=subprocess.PIPE)
     lines = processes.stdout.decode().split("\n")[:-1]
     lines_to_print = []
@@ -135,3 +134,7 @@ def main():
         ))
 
     print(lines[-1])
+
+
+if __name__ == '__main__':
+    main()
