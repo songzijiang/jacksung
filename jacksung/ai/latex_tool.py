@@ -73,7 +73,8 @@ def polish(main_dir_path, tex_file, server_url, token='Your token here', model_n
                 up_flag = True
             if line.count(r'\end{' + flag) > 0:
                 up_flag = False
-        if line.startswith('%') or line.startswith('\\') or line == '' or up_flag:
+        if not line.startswith(r'\caption{') and (
+                line.startswith('%') or line.startswith('\\') or line == '' or up_flag):
             new_tex += line + '\n'
         else:
             tqdm.write('polish:' + line[:100])
