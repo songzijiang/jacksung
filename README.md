@@ -180,7 +180,19 @@ np2tif(nc_t, 'constant_masks/upper', dim_value=dim)
 np2tif('constant_masks/land_mask.npy', save_path='constant_masks', out_name='land_mask', left=0, top=90, x_res=0.25,
        y_res=0.25, dtype=np.float32, dim_value=dim)
 ```
-
+## AI tools
+### latex auto polish
+auto polish latex using LLM.
+```
+from jacksung.ai.latex_tool import polish
+# e.g.
+# if your main.tex located in '/mnt/paper1/main.tex'
+# main_dir_path is '/mnt/paper1' and tex_file is 'main.tex'
+polish(main_dir_path='your latex root directory', tex_file='your main tex path consider from main_dir_path', server_url='The full LLM server url with v1',
+       token='Your token here',
+       )
+```
+After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex
 ## Note
 #### Commit new dependence
 Please refer to how to upload a dependence
