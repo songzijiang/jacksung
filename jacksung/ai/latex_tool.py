@@ -40,11 +40,12 @@ class AI:
         self.client = OpenAI(api_key=token, base_url=base_url)
         self.model_name = model_name
 
-    def call_ai_polish(self, text):
+    def call_ai_polish(self, text, prompt):
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=[
-                {"role": "user", "content": get_polish_prompt(text)}
+                {"role": "user",
+                 "content": (get_polish_prompt(text) if prompt is None else prompt.replace('{content}', text))}
             ],
             temperature=0.6,
             # max_tokens=1024,
@@ -59,7 +60,7 @@ class AI:
         return content
 
 
-def polish(main_dir_path, tex_file, token, server_url, model_name='deepseek-r1:70b'):
+def polish(main_dir_path, tex_file, server_url, token='Your token here', model_name='deepseek-r1:70b', prompt=None):
     ai = AI(token=token, base_url=server_url, model_name=model_name)
     result_tex = merge_content(main_dir_path, tex_file)
     new_tex = ''
@@ -76,7 +77,7 @@ def polish(main_dir_path, tex_file, token, server_url, model_name='deepseek-r1:7
             new_tex += line + '\n'
         else:
             tqdm.write('polish:' + line[:100])
-            new_tex += ai.call_ai_polish(line) + '\n'
+            new_tex += ai.call_ai_polish(line, prompt) + '\n'
 
     with open(r'D:\download\FY_forecast\old.tex', 'w', encoding='utf-8') as f:
         f.write(result_tex)
