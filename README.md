@@ -188,11 +188,16 @@ from jacksung.ai.latex_tool import polish
 # e.g.
 # if your main.tex located in '/mnt/paper1/main.tex'
 # main_dir_path is '/mnt/paper1' and tex_file is 'main.tex'
+# If your paper is in Chinese or other language, use cn_prompt=True
+# If you want to use custom prompt, you can use prompt with '{text}'.
+# You can define the skip or rewrite part using skip_part_list and rewrite_list. If you don`t know how to set, the default setting is recommended.
 polish(main_dir_path='your latex root directory', tex_file='your main tex path consider from main_dir_path', server_url='The full LLM server url with v1',
        token='Your token here',
        )
 ```
-After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex
+- After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex.
+- If there are errors in compiling diff.tex, you need to revise the produced new.tex to fix the bug first.
+- The LLM is recommend at least Deepseek-R1-70b and bigger, smaller model will produce more bugs lead to errors.
 ## Note
 #### Commit new dependence
 Please refer to how to upload a dependence
