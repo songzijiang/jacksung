@@ -183,6 +183,9 @@ np2tif('constant_masks/land_mask.npy', save_path='constant_masks', out_name='lan
 ## AI tools
 ### latex auto polish
 auto polish latex using LLM.
+If you want to use custom prompt, you can use prompt with '{text}'.
+You can define the skip or rewrite part using skip_part_list and rewrite_list. If you don`t know how to set, the default setting is recommended.
+ 
 ```
 from jacksung.ai.latex_tool import polish
 # e.g.
@@ -192,7 +195,9 @@ polish(main_dir_path='your latex root directory', tex_file='your main tex path c
        token='Your token here',
        )
 ```
-After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex
+- After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex.
+- If there are errors in compiling diff.tex, you need to revise the produced new.tex to fix the bug first.
+- The LLM is recommend at least Deepseek-R1-70b and bigger, smaller model will produce more bugs lead to errors.
 ## Note
 #### Commit new dependence
 Please refer to how to upload a dependence
