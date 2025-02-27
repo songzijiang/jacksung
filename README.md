@@ -183,14 +183,14 @@ np2tif('constant_masks/land_mask.npy', save_path='constant_masks', out_name='lan
 ## AI tools
 ### latex auto polish
 auto polish latex using LLM.
-If you want to use custom prompt, you can use prompt with '{text}'.
-You can define the skip or rewrite part using skip_part_list and rewrite_list. If you don`t know how to set, the default setting is recommended.
- 
 ```
 from jacksung.ai.latex_tool import polish
 # e.g.
 # if your main.tex located in '/mnt/paper1/main.tex'
 # main_dir_path is '/mnt/paper1' and tex_file is 'main.tex'
+# If your paper is in Chinese or other language, use cn_prompt=True
+# If you want to use custom prompt, you can use prompt with '{text}'.
+# You can define the skip or rewrite part using skip_part_list and rewrite_list. If you don`t know how to set, the default setting is recommended.
 polish(main_dir_path='your latex root directory', tex_file='your main tex path consider from main_dir_path', server_url='The full LLM server url with v1',
        token='Your token here',
        )
