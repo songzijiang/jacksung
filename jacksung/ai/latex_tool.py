@@ -128,9 +128,9 @@ def polish(main_dir_path, tex_file, server_url, token='Your token here', model_n
                 tqdm.write(f'**e**{e}')
                 new_tex += line + '\n'
 
-    with open(r'D:\download\FY_forecast\old.tex', 'w', encoding='utf-8') as f:
+    with open(rf'{main_dir_path}\old.tex', 'w', encoding='utf-8') as f:
         f.write(result_tex)
-    with open(r'D:\download\FY_forecast\new.tex', 'w', encoding='utf-8') as f:
+    with open(rf'{main_dir_path}\new.tex', 'w', encoding='utf-8') as f:
         f.write(new_tex)
     write_diff(main_dir_path)
 
