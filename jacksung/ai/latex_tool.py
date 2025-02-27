@@ -4,22 +4,37 @@ from tqdm import tqdm
 from jacksung.utils.time import Stopwatch, get_time_str
 
 
-def get_polish_prompt(content):
+def get_en_polish_prompt(text):
+    polish_prompt = \
+        fr'''
+        # Rewrite the text in an academic writing style, using more appropriate vocabulary and sentence structure while keeping the original meaning unchanged:
+        - Make sure the rewritten version conveys the same information and intention as the original text.
+        - Please output the rewritten text directly in latex format, without including the original text, thinking logic, comments, explanations, etc.
+        - Do not output any control commands that do not exist in the input content (such as \documentclass, \begin, \end, etc.), just use latex format to output mathematical formulas, symbols, references, or other latex instructions contained in the input content.
+        - Note that special symbols and formulas are output in latex format, not directly output special characters.
+        - Only when the input content contains control codes such as \par, the code needs to be added to the corresponding position of the output content.
+        - If the input content only contains code and does not contain any substantial text content, the input content is directly output without any changes. Be careful not to miss symbols such as brackets.
+        - Make sure that the output content can be compiled normally after replacing the input content in the original document.
+        The following is the input content:
+        {text}
+        '''
+    return polish_prompt
+
+
+def get_cn_polish_prompt(text):
     polish_prompt = \
         fr'''
         # 用学术写作风格重写下面的文本,在保持原本涵义不变的情况下使用更合适的词汇和句子结构:
-        输入内容:
-        <content>{content}</content>
-        
         - 确保改写后的版本传达的信息和意图与原文相同。
         - 请直接以latex格式输出重写后的文本，不需要包含原文、思考逻辑、注释、解释说明等其他内容。
         - 不需要输出任何输入内容中不存在的控制命令（如\documentclass、\begin、\end等），只需要使用latex格式输出数学公式、符号、引用或者输入内容中所包含的其他latex指令。
-        - 注意特殊符号和公式以latex格式输出，而不是直接输出特殊字符。\
-        - 输入内容中类似\par的控制性代码，在输出部分也需要添加。
+        - 注意特殊符号和公式以latex格式输出，而不是直接输出特殊字符。
+        - 仅在输入内容中包含\par类似的控制性代码时，在输出内容对应位置需要添加该代码。
         - 如果输入内容仅包含代码，不包含任何实质性的文本内容，则直接将输入内容不做任何改动输出。注意不要遗漏括号等符号。
         - 确保输出内容在原文档中替换输入内容后能够正常编译通过。
-        - 输出内容的语言需要与输入内容保持一致，输入内容为中文则输出内容也为中文，输入内容为英文则输出内容也为英文，不需要做任何翻译。
-        输出内容:
+        - 重要：你需要确定输入内容所使用的语言，然后使用相同语言进行输出，以保证输入和输出语言一致。
+        以下为输入内容:
+        {text}
         '''
     return polish_prompt
 
@@ -46,12 +61,13 @@ class AI:
         self.client = OpenAI(api_key=token, base_url=base_url)
         self.model_name = model_name
 
-    def call_ai_polish(self, text, prompt):
+    def call_ai_polish(self, text, cn_prompt=False, prompt=None):
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=[
                 {"role": "user",
-                 "content": (get_polish_prompt(text) if prompt is None else prompt.replace('{content}', text))}
+                 "content": ((get_cn_polish_prompt(text) if cn_prompt else get_en_polish_prompt(
+                     text)) if prompt is None else prompt.replace('{content}', text))}
             ],
             temperature=0.6,
             # max_tokens=1024,
@@ -63,11 +79,15 @@ class AI:
         # print(response.choices[0].message.content)
         content = response.choices[0].message.content
         content = content.split('</think>')[1].strip().replace('\n\n', ' ')
+        if text.startswith(r'\par ') and not content.startswith(r'\par '):
+            print(rf'missing \par in polished text, append it to the beginning of the text.')
+            content = r'\par ' + content
         return content
 
 
-def polish(main_dir_path, tex_file, server_url, token='Your token here', model_name='deepseek-r1:70b', prompt=None,
-           rewrite_list=(r'\caption{', r'\par '), skip_part_list=('figure', 'table', 'equation'), ignore_length=100):
+def polish(main_dir_path, tex_file, server_url, token='Your token here', model_name='deepseek-r1:70b', cn_prompt=False,
+           prompt=None, rewrite_list=(r'\caption{', r'\par '), skip_part_list=('figure', 'table', 'equation'),
+           ignore_length=100):
     st = Stopwatch()
     ai = AI(token=token, base_url=server_url, model_name=model_name)
     result_tex = merge_content(main_dir_path, tex_file)
@@ -98,9 +118,9 @@ def polish(main_dir_path, tex_file, server_url, token='Your token here', model_n
             new_tex += line + '\n'
         else:
             try:
-                print(rf'当前处理{idx}/{len(result_split)}行,总共用时{st.pinch()},当前时间{get_time_str()}')
+                print(rf'当前处理{idx}/{len(result_split)}行,总共用时{st.pinch()},当前时间:{get_time_str()}')
                 print(f'**p**{line[:100]}{"..." if len(line) > 100 else line}***')
-                polish_text = ai.call_ai_polish(line, prompt)
+                polish_text = ai.call_ai_polish(line, cn_prompt, prompt)
                 print(f'**r**{polish_text[:100]}{"..." if len(polish_text) > 100 else polish_text}***')
                 print(rf'处理结束，耗时{spend_count.pinch()},共改写{len(line)}个字符')
                 new_tex += polish_text + '\n'
