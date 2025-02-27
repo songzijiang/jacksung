@@ -6,13 +6,14 @@ from tqdm import tqdm
 def get_polish_prompt(content):
     polish_prompt = \
         f'''
-        Rewrite the following text in a different way, maintaining its original meaning but using alternative vocabulary and sentence structures in an academic style:
+        用学术写作风格重写下面的文本,在保持原本涵义不变的情况下使用更合适的词汇和句子结构:
         Text:
         ---------
         {content}
         ---------
-        Ensure that your rephrased version conveys the same information and intent as the original.
+        确保改写后的版本传达的信息和意图与原文相同。
         请直接以latex格式输出重写后的文本，不需要包含原文和思考逻辑等其他内容。
+        注意特殊符号和公式以latex格式输出，而不是直接输出特殊字符。
         Response:
         '''
     return polish_prompt
