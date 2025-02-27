@@ -10,11 +10,9 @@ Create env by conda:
 ```pip install jacksung```
 ## Login ecnu
 1 [download chromedriver](https://googlechromelabs.github.io/chrome-for-testing/)
-    windows:chromedriver.exe
-    linux:chromedriver
+    on windows is chromedriver.exe and on linux:chromedriver
 
-p.s. chrome should be installed first, 
-[see how to install Chrome](https://www.google.com/chrome/)
+p.s. chrome should be installed first, [see how to install Chrome](https://www.google.com/chrome/)
 
 2 make the directory 'chrome' in the home path
 
