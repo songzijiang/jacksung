@@ -78,7 +78,9 @@ def polish(main_dir_path, tex_file, server_url, token='Your token here', model_n
             new_tex += line + '\n'
         else:
             tqdm.write('polish:' + line[:100])
-            new_tex += ai.call_ai_polish(line, prompt) + '\n'
+            polish_text = ai.call_ai_polish(line, prompt)
+            tqdm.write('polish result:' + polish_text[:100])
+            new_tex += polish_text + '\n'
 
     with open(r'D:\download\FY_forecast\old.tex', 'w', encoding='utf-8') as f:
         f.write(result_tex)
