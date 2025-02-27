@@ -19,7 +19,8 @@ def cal_time(fun_str):
     elapsed_time = end_time - start_time
     print("Elapsed Time:", elapsed_time, "seconds")
 
-
+def get_time_str():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 def cur_timestamp_str():
     now = datetime.now()
     year = str(now.year)
