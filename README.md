@@ -9,12 +9,9 @@ Create env by conda:
 ## Installation
 ```pip install jacksung```
 ## Login ecnu
-1 [download chromedriver](https://googlechromelabs.github.io/chrome-for-testing/)
-    windows:chromedriver.exe
-    linux:chromedriver
-
-p.s. chrome should be installed first, 
-[see how to install Chrome](https://www.google.com/chrome/)
+1 [download chromedriver](https://googlechromelabs.github.io/chrome-for-testing/) on windows is chromedriver.exe and on linux:chromedriver
+    
+*p.s. chrome should be installed first, [see how to install Chrome](https://www.google.com/chrome/)*
 
 2 make the directory 'chrome' in the home path
 
@@ -26,16 +23,17 @@ p.s. chrome should be installed first,
 --|--|--tmp
 ```
 
-4 run cmd
+4 How to run?
+- run cmd
 ```ecnu_login -u 账号 -p 密码```
-Or
+- Or
 set the username and password in ~/.ecnu_login
 ```
 u: 账户
 p: 密码
 ```
 and then run cmd ```ecnu_login```
-Or using python code:
+- Or using python code:
 ```
 from jacksung.utils.login import ecnu_login
 
