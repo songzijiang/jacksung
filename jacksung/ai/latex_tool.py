@@ -82,11 +82,17 @@ class AI:
         if text.startswith(r'\par ') and not content.startswith(r'\par '):
             print(rf'missing \par in polished text, append it to the beginning of the text.')
             content = r'\par ' + content
+        if text.startswith(r'\par{') and not content.startswith(r'\par{'):
+            print(rf'missing \par in polished text, append it to the beginning of the text.')
+            content = r'\par{' + content
+        if text.endswith(r'}') and not content.endswith(r'}'):
+            print(r'missing } in polished text, append it to the beginning of the text.')
+            content = content + r'}'
         return content
 
 
 def polish(main_dir_path, tex_file, server_url, token='Your token here', model_name='deepseek-r1:70b', cn_prompt=False,
-           prompt=None, rewrite_list=(r'\caption{', r'\par '), skip_part_list=('figure', 'table', 'equation'),
+           prompt=None, rewrite_list=(r'\caption{', r'\par ', r'\par{'), skip_part_list=('figure', 'table', 'equation'),
            ignore_length=100):
     st = Stopwatch()
     ai = AI(token=token, base_url=server_url, model_name=model_name)
