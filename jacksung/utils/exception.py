@@ -1,7 +1,7 @@
 import time
 
 
-def wait_fun(fun, args, catch_exception=Exception, sleep_time=1, wait_time=15, open_log=True):
+def wait_fun(fun, args, catch_exception=Exception, sleep_time=0.5, wait_time=5, open_log=True):
     try:
         return fun(*args)
     except catch_exception as e:

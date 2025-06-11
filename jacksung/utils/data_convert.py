@@ -44,7 +44,7 @@ def make_dms(s):
     return result
 
 
-def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None, print_log=True):
+def _save_np2tif(np_data, output_dir, out_name, coordinate=None, resolution=None, dtype=None, print_log=False):
     h, w = np_data.shape
     os.makedirs(output_dir, exist_ok=True)
     save_path = os.path.join(output_dir, out_name)

@@ -24,9 +24,10 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     if download_dir:
         options.add_experimental_option("prefs", {
             "download.default_directory": download_dir,
-            # "download.prompt_for_download": False,
+            "download.prompt_for_download": False,
+            "safebrowsing.enabled": True,  # 允许“不安全”文件自动下载
+            "safebrowsing.disable_download_protection": True  # 禁用“可能有害文件”的拦截
             # "download.directory_upgrade": True,
-            # "safebrowsing.enabled": True
         })
     options.set_capability('pageLoadStrategy', 'none')
     options.set_capability("unhandledPromptBehavior", "accept")
