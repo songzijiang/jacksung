@@ -1,6 +1,7 @@
 import torch.nn as nn
-from models.GeoNet.m_blockV2 import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
+from jacksung.ai.GeoNet.m_block import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
 import torch
+
 
 class GeoNet(nn.Module):
     def __init__(self, window_sizes, n_lgab, c_in, c_lgan, r_expand=4, down_sample=4, num_heads=8, task='pred',
