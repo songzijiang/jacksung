@@ -25,6 +25,7 @@ import cv2
 
 reference_cache = Cache(10)
 x_range = {'left': -60, 'top': 60, 'bottom': -60, 'right': 60, 'width': 2400, 'height': 2400}
+min_x_range = {'left': -60, 'top': 60, 'bottom': -60, 'right': 60, 'width': 480, 'height': 480}
 static_params = {4000: {'l': 2747, 'c': 2747, 'COFF': 1373.5, 'CFAC': 10233137, 'LOFF': 1373.5, 'LFAC': 10233137},
                  2000: {'l': 5495, 'c': 5495, 'COFF': 2747.5, 'CFAC': 20466274, 'LOFF': 2747.5, 'LFAC': 20466274},
                  1000: {'l': 10991, 'c': 10991, 'COFF': 5495.5, 'CFAC': 40932549, 'LOFF': 5495.5, 'LFAC': 40932549},
@@ -36,6 +37,11 @@ def getFY_coord(ld):
     return Coordinate(left=ld + x_range['left'], top=x_range['top'], right=ld + x_range['right'],
                       bottom=x_range['bottom'], h=x_range['height'], w=x_range['width'])
     # return Coordinate(left=ld - 45, top=36, right=ld + 45, bottom=-36, h=1571, w=1963)
+
+
+def getFY_coord_min(ld):
+    return Coordinate(left=ld + min_x_range['left'], top=min_x_range['top'], right=ld + min_x_range['right'],
+                      bottom=min_x_range['bottom'], h=min_x_range['height'], w=min_x_range['width'])
 
 
 def getFY_coord_clip():
@@ -108,6 +114,13 @@ def get_reference(ld):
     spatial_reference = osr.SpatialReference()
     spatial_reference.SetWellKnownGeogCS('WGS84')
     return spatial_reference, gcps_list
+
+
+def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None):
+    d = (ld - 120) * 20
+    np_data = getNPfromHDF(file_path, file_type, lock)
+    np_data = np_data[:, 0:800, 800 - d:1600 - d]
+    return np_data
 
 
 def getNPfromHDF(hdf_path, file_type='FDI', lock=None):

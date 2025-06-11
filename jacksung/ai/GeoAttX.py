@@ -1,19 +1,16 @@
 import os.path
 import random
-import shutil
 from datetime import datetime, timedelta
 
-from scipy.ndimage import zoom
-
-from util import utils
 import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
-from util.norm_util import PredNormalization, PrecNormalization
+from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization
 import numpy as np
 from jacksung.utils.data_convert import np2tif
-from util.utils import getFY_coord, prase_filename, get_reference, getNPfromHDF, getFY_coord_min, getFY_coord_clip, \
-    getNPfromHDFClip
+from jacksung.ai.utils.fy import prase_filename, getFY_coord_clip, getNPfromHDFClip
 from einops import rearrange
+from jacksung.ai.utils.util import parse_config, data_to_device
+from jacksung.ai.GeoNet.m_network import GeoNet
 
 
 class NoFileException(Exception):
@@ -26,7 +23,7 @@ class GeoAttX:
     def __init__(self, config=None, root_path=None, task_type=None):
         self.root_path = None
         self.timestamp = None
-        self.device, self.args = utils.parse_config(config)
+        self.device, self.args = parse_config(config)
         self.task_type = task_type
         self.set_root_path(root_path)
 
@@ -40,7 +37,10 @@ class GeoAttX:
                                           random.randint(1000, 9999)))
 
     def load_model(self, path):
-        model = utils.get_model(self.args, task_type=self.task_type)
+        model = GeoNet(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
+                       c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
+                       num_heads=self.args.num_heads, task=self.task_type if self.task_type else self.args.task,
+                       downstage=self.args.downstage)
         ckpt = torch.load(path, map_location=torch.device(self.device))
         model.load(ckpt['model_state_dict'])
         model = model.to(self.device)
@@ -59,7 +59,7 @@ class GeoAttX_I(GeoAttX):
         self.x12 = self.load_model(x12_path)
         # self.x48 = self.load_model(x48_path)
         self.norm = PredNormalization(self.args.pred_data_path)
-        self.norm.mean, self.norm.std = utils.data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
+        self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
 
     def save(self, file_name, ys):
@@ -101,7 +101,7 @@ class GeoAttX_I(GeoAttX):
 
     def numpy2tensor(self, f_data):
         f_data = torch.from_numpy(f_data)
-        f = utils.data_to_device([f_data], self.device, self.args.fp)[0]
+        f = data_to_device([f_data], self.device, self.args.fp)[0]
         f = rearrange(f, '(b c) h w -> b c h w', b=1)
         return f
 
@@ -208,9 +208,8 @@ class GeoAttX_P(GeoAttX):
             n_data = torch.from_numpy(n_data)
             norm = PrecNormalization(self.args.prec_data_path)
             norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
-                utils.data_to_device([norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe], self.device,
-                                     self.args.fp)
-            n_data = utils.data_to_device([n_data], self.device, self.args.fp)[0]
+                data_to_device([norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe], self.device, self.args.fp)
+            n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b t c) h w -> b t c h w', b=1, t=1)
             n = norm.norm(n_data, norm_type='fy')[:, 0, :, :, :]
             y_ = self.model(n, n)
