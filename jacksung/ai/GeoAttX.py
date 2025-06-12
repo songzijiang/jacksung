@@ -19,6 +19,12 @@ class NoFileException(Exception):
         super().__init__(f'No such file: {file_name}')
 
 
+class NanNPException(Exception):
+    def __init__(self, file_name):
+        self.file_name = file_name
+        super().__init__(f'Nan value in np data: {file_name}')
+
+
 class GeoAttX:
     def __init__(self, config=None, root_path=None, task_type=None):
         self.root_path = None
@@ -76,10 +82,12 @@ class GeoAttX_I(GeoAttX):
             p_path = self.get_path_by_filename(target_filename)
             if idx >= 1 and os.path.exists(p_path):
                 coord = getFY_coord_clip()
-                p_data = getNPfromHDFClip(self.ld, p_path)[2:, :, :]
-                np2tif(p_data, save_path=self.root_path, out_name=f'target_{k.strftime("%Y%m%d_%H%M%S")}',
-                       print_log=False, coord=coord, dtype=np.float32,
-                       dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
+                p_data = getNPfromHDFClip(self.ld, p_path)
+                if p_data is not None:
+                    p_data = p_data[2:, :, :]
+                    np2tif(p_data, save_path=self.root_path, out_name=f'target_{k.strftime("%Y%m%d_%H%M%S")}',
+                           print_log=False, coord=coord, dtype=np.float32,
+                           dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
         print(f'data saved in {self.root_path}')
         with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
             f.write(f'输入数据：{file_info["start"]} {file_info["position"]} {file_info["end"]}\n')
@@ -110,7 +118,11 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path)[2:, :, :]
+        f_data = getNPfromHDFClip(self.ld, f_path)
+        if f_data is not None:
+            f_data = f_data[2:, :, :]
+        else:
+            raise NanNPException(f_path)
         # f_data = zoom(f_data.astype(np.float32), (1, 1 / 5, 1 / 5))
         return self.numpy2tensor(f_data)
 
@@ -134,6 +146,7 @@ class GeoAttX_I(GeoAttX):
             #     step = 24
             print(f'当前时刻:{file_info["start"]}\n预测长度:{step * 15}分钟')
             task_progress = []
+            p_steps = sorted(p_steps, reverse=True)
             while step > 0:
                 for p_step in p_steps:
                     if step >= p_step:
@@ -176,12 +189,12 @@ class GeoAttX_I(GeoAttX):
                 del f
                 n = y_
                 porcess_list[now_date] = self.norm.denorm(y_).detach().cpu().numpy()[0]
-        except NoFileException as e:
+        except (NoFileException, NanNPException) as e:
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
                 file_info = prase_filename(filename)
-                f.write(f'Not exist {file_info["start"]}:{e.file_name}\n')
+                f.write(f'{e.__class__}: {file_info["start"]}\n')
             return {}
         return porcess_list
 
