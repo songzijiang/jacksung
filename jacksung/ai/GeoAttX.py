@@ -1,6 +1,6 @@
 import os.path
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
