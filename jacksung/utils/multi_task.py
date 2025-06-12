@@ -9,6 +9,25 @@ type_thread = 'type_thread'
 type_process = 'type_process'
 
 
+class ThreadingLock:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.owner = None
+
+    def acquire(self, blocking=True):
+        acquired = self.lock.acquire(blocking)
+        if acquired:
+            self.owner = threading.current_thread().name
+        return acquired
+
+    def release(self):
+        self.lock.release()
+        self.owner = None
+
+    def get_owner(self):
+        return self.owner
+
+
 def init(tl, pl):
     global t_lock
     global p_lock
