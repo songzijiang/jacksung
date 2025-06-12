@@ -11,18 +11,7 @@ from jacksung.ai.utils.fy import prase_filename, getFY_coord_clip, getNPfromHDFC
 from einops import rearrange
 from jacksung.ai.utils.util import parse_config, data_to_device
 from jacksung.ai.GeoNet.m_network import GeoNet
-
-
-class NoFileException(Exception):
-    def __init__(self, file_name):
-        self.file_name = file_name
-        super().__init__(f'No such file: {file_name}')
-
-
-class NanNPException(Exception):
-    def __init__(self, file_name):
-        self.file_name = file_name
-        super().__init__(f'Nan value in np data: {file_name}')
+from jacksung.utils.exception import NoFileException, NanNPException
 
 
 class GeoAttX:

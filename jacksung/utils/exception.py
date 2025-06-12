@@ -1,6 +1,18 @@
 import time
 
 
+class NoFileException(Exception):
+    def __init__(self, file_name):
+        self.file_name = file_name
+        super().__init__(f'No such file: {file_name}')
+
+
+class NanNPException(Exception):
+    def __init__(self, file_name):
+        self.file_name = file_name
+        super().__init__(f'Nan value in np data: {file_name}')
+
+
 def wait_fun(fun, args, catch_exception=Exception, sleep_time=0.5, wait_time=5, open_log=True):
     try:
         return fun(*args)
