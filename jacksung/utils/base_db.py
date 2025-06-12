@@ -26,6 +26,7 @@ class BaseDB:
         self.passwd = None
         self.user = None
         self.host = None
+        self.port = None
         self.autocommit = True
         self.ini_path = ini_path
         pymysql.install_as_MySQLdb()
@@ -36,15 +37,16 @@ class BaseDB:
         config.read(self.ini_path)
         # Create the connection object
         self.host = config['database']['host']
-        self.user = config['database']['user']
         self.passwd = config['database']['password']
         self.db = config['database']['database']
+        self.user = config['database'].get('user', 'root')
+        self.port = config['database'].getint('port', 3306)
 
     def reconnect(self):
         if not self.conn:
             self.read_config()
         # 打开数据库连接
-        connection = pymysql.connect(host=self.host, user=self.user, passwd=self.passwd, db=self.db,
+        connection = pymysql.connect(host=self.host, user=self.user, passwd=self.passwd, db=self.db, port=self.port,
                                      autocommit=self.autocommit)
         tqdm.write('Reconnected!')
         return connection
