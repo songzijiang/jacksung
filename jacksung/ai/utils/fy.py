@@ -192,8 +192,9 @@ def _getNPfromHDF_worker(read_np_data, current_date, data_dir=None, ld=None, r=N
 # 解析FY文件的文件名
 def prase_filename(filename):
     m_list = filename.replace('.HDF', '').split('_')
-    return {'satellite': m_list[0], 'sensor': m_list[1], 'area': m_list[3],
-            'position': int(m_list[4][:3]), 'start': datetime.strptime(m_list[9], '%Y%m%d%H%M%S'),
+    # FY4B-_AGRI--_N_DISK_1050E_L1-_FDI-_MULT_NOM_20250606171500_20250606172959_4000M_V0001.HDF
+    return {'satellite': m_list[0], 'sensor': m_list[1], 'area': m_list[3], 'position': int(m_list[4][:3]),
+            'file_level': m_list[5], 'data_name': m_list[6], 'start': datetime.strptime(m_list[9], '%Y%m%d%H%M%S'),
             'end': datetime.strptime(m_list[10], '%Y%m%d%H%M%S'), 'resolution': m_list[11]}
 
 
