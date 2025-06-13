@@ -258,10 +258,12 @@ def make_fig(file_name, root_path, out_folder=None, tz='UTC',
     plt.xticks(fontsize=font_size)
     plt.yticks(fontsize=font_size)
     # plt.title(fontsize=font_size)
-    plt.savefig(os.path.join(root_path, file_dir, file_name))
+    file_save_path = os.path.join(root_path, file_dir, file_name)
+    plt.savefig(file_save_path)
     if zoom_rectangle is not None:
-        read_png = cv2.imread(os.path.join(root_path, file_dir, file_name))
+        read_png = cv2.imread(file_save_path)
         read_png = zoomAndDock(read_png, zoom_rectangle, docker, scale_factor=5, border=14)
-        cv2.imwrite(os.path.join(root_path, file_dir, file_name), read_png)
-    crop_png(os.path.join(root_path, file_dir, file_name), left=corp[0], top=corp[1], right=corp[2], bottom=corp[3])
+        cv2.imwrite(file_save_path, read_png)
+    crop_png(file_save_path, left=corp[0], top=corp[1], right=corp[2], bottom=corp[3])
+    return file_save_path
     # plt.show()
