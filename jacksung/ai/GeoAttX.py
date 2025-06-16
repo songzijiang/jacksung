@@ -94,7 +94,7 @@ class GeoAttX_I(GeoAttX):
 
     def get_path_by_filename(self, file_name):
         file_info = prase_filename(file_name)
-        return f'{self.data_path}/{file_info["start"].year}/{file_info["start"].month}/{file_info["start"].day}/{file_name}'
+        return f'{self.data_path}/downloaded_file/{file_info["start"].year}/{file_info["start"].month}/{file_info["start"].day}/{file_name}'
         # return f'{self.data_path}/{file_name}'
 
     def numpy2tensor(self, f_data):
