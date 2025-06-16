@@ -82,6 +82,7 @@ class GeoAttX_I(GeoAttX):
             f.write(f'输入数据：{file_info["start"]} {file_info["position"]} {file_info["end"]}\n')
             for k, y in ys.items():
                 f.write(f'预测：{k}\n')
+        return self.root_path
 
     def get_filename(self, file_name, mins):
         file_info = prase_filename(file_name)
@@ -200,6 +201,7 @@ class GeoAttX_P(GeoAttX):
         if info_log:
             with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
                 f.write(f'反演：{save_name}\n')
+        return self.root_path
 
     def predict(self, fy_npy_path):
         try:
