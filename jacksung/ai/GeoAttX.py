@@ -27,7 +27,7 @@ class GeoAttX:
 
     def set_root_path(self, root_path=None, dir_name=None):
         self.timestamp = cur_timestamp_str()
-        root_path = root_path if root_path else './'
+        root_path = root_path if root_path else self.args.save_path
         dir_name = dir_name if dir_name else self.task_type + '-' + self.args.model + '-' + self.timestamp + '_' + str(
             random.randint(1000, 9999))
         self.root_path = os.path.join(root_path, dir_name)
