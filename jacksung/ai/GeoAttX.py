@@ -25,11 +25,12 @@ class GeoAttX:
     def get_root_path(self):
         return self.root_path
 
-    def set_root_path(self, root_path=None):
+    def set_root_path(self, root_path=None, dir_name=None):
         self.timestamp = cur_timestamp_str()
-        self.root_path = os.path.join(root_path if root_path else self.args.save_path,
-                                      self.task_type + '-' + self.args.model + '-' + self.timestamp + '_' + str(
-                                          random.randint(1000, 9999)))
+        root_path = root_path if root_path else './'
+        dir_name = dir_name if dir_name else self.task_type + '-' + self.args.model + '-' + self.timestamp + '_' + str(
+            random.randint(1000, 9999))
+        self.root_path = os.path.join(root_path, dir_name)
 
     def load_model(self, path):
         model = GeoNet(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
