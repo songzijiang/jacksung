@@ -4,6 +4,7 @@ import platform
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
+from jacksung.utils.log import oprint as print
 from selenium.webdriver.common.by import By
 
 
@@ -44,7 +45,6 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     # driver.maximize_window()
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(10)
-    print('driver is inited!')
     print(f'请求地址：{url}')
     driver.get(url)
     return driver

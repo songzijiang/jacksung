@@ -1,4 +1,5 @@
 import time
+from jacksung.utils.log import oprint as print
 
 
 class NoFileException(Exception):

@@ -13,9 +13,9 @@ def format_log(*args):
     return '[' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ']\t' + ' '.join([str(x) for x in args])
 
 
-def oprint(*args):
+def oprint(*args, **kwargs):
     log = format_log(*args)
-    print(log)
+    print(log, end=kwargs.get('end', '\n'))
 
 
 def thread_send_log(url, content, name):
@@ -81,5 +81,6 @@ class LogClass:
 
 
 if __name__ == '__main__':
-    sys.stdout = StdLog(filename='log.txt', common_path='warning.txt')
+    # sys.stdout = StdLog(filename='log.txt', common_path='warning.txt')
+    oprint('this is a log', end=' ')
     oprint('this is a log')
