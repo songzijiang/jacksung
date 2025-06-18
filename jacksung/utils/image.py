@@ -59,6 +59,39 @@ def make_block(h, w, color=(255, 255, 255), dtype=np.int32):
     return np.array([[color for _ in range(w)] for _ in range(h)], dtype=dtype)
 
 
+def get_color_position(value, colors):
+    colors_min, colors_max = colors[0][0], colors[-1][0]
+    colors = [[(color[0] - colors_min) / (colors_max - colors_min), color[1]] for color in colors]
+    i = 0
+    while i < len(colors) - 1:
+        if value <= colors[i + 1][0]:
+            break
+        i += 1
+    color_str0, color_str1 = colors[i][1], colors[i + 1][1]
+    r1, g1, b1, r2, g2, b2 = int(color_str0[1:3], 16), int(color_str0[3:5], 16), int(color_str0[5:7], 16), \
+        int(color_str1[1:3], 16), int(color_str1[3:5], 16), int(color_str1[5:7], 16)
+    r = (value - colors[i][0]) / (colors[i + 1][0] - colors[i][0]) * (r2 - r1) + r1
+    g = (value - colors[i][0]) / (colors[i + 1][0] - colors[i][0]) * (g2 - g1) + g1
+    b = (value - colors[i][0]) / (colors[i + 1][0] - colors[i][0]) * (b2 - b1) + b1
+    return np.array((b, g, r))
+
+
+def make_color_map(colors, h, w, unit=''):
+    colors_map = np.zeros((h, w, 3), dtype=np.uint8) + 255
+    l_margin, r_margin = 300, 200
+    w = w - l_margin - r_margin
+    for i in range(l_margin, w + l_margin):
+        i = i - l_margin
+        colors_map[:100, i + l_margin] = get_color_position(i / w, colors)
+        if i in [0, w // 2, w - 1]:
+            text = str(round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0]))
+            if i == 0:
+                text += unit
+            colors_map = draw_text(colors_map, (i - 100 + l_margin, 100),
+                                   font=ImageFont.truetype(r'times.ttf', 150), text=text)
+    return colors_map
+
+
 def crop_png(input_path, left=0, top=0, right=None, bottom=None, right_margin=0, bottom_margin=0):
     # 打开 PNG 图像
     image = Image.open(input_path)
