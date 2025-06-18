@@ -3,6 +3,7 @@ from PIL import Image, ImageFont, ImageDraw
 import numpy as np
 from jacksung.utils.data_convert import Coordinate
 import os
+from importlib import resources
 
 
 def get_pixel_by_coord(img, coord, x, y):
@@ -20,7 +21,8 @@ def get_pixel_by_coord(img, coord, x, y):
 def draw_text(img, xy, font=None, font_size=35, text='test text', color=(0, 0, 0)):
     if font is None:
         try:
-            font = ImageFont.truetype(r'../libs/times.ttf', font_size)
+            with resources.path("jacksung.libs", "times.ttf") as font_path:
+                font = ImageFont.truetype(str(font_path), size=font_size)  # 指定字体大小
         except:
             print('load times ttf failed, using the default font')
             font = ImageFont.load_default()
@@ -87,8 +89,14 @@ def make_color_map(colors, h, w, unit=''):
             text = str(round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0]))
             if i == 0:
                 text += unit
+            try:
+                with resources.path("jacksung.libs", "times.ttf") as font_path:
+                    font = ImageFont.truetype(str(font_path), size=150)  # 指定字体大小
+            except:
+                print('load times ttf failed, using the default font')
+                font = ImageFont.load_default()
             colors_map = draw_text(colors_map, (i - 100 + l_margin, 100),
-                                   font=ImageFont.truetype(r'../libs/times.ttf', 150), text=text)
+                                   font=font, text=text)
     return colors_map
 
 
