@@ -4,13 +4,14 @@ from datetime import timedelta
 
 import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
-from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization
+from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, PremNormalization
 import numpy as np
 from jacksung.utils.data_convert import np2tif
 from jacksung.ai.utils.fy import prase_filename, getFY_coord_clip, getNPfromHDFClip
 from einops import rearrange
 from jacksung.ai.utils.util import parse_config, data_to_device
 from jacksung.ai.GeoNet.m_network import GeoNet
+from jacksung.ai.GeoNet.m_networkV2 import GeoNet as GeoNetV2
 from jacksung.utils.exception import NoFileException, NanNPException
 
 
@@ -32,11 +33,17 @@ class GeoAttX:
             random.randint(1000, 9999))
         self.root_path = os.path.join(root_path, dir_name)
 
-    def load_model(self, path):
-        model = GeoNet(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
-                       c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
-                       num_heads=self.args.num_heads, task=self.task_type if self.task_type else self.args.task,
-                       downstage=self.args.downstage)
+    def load_model(self, path, version=1):
+        if version == 1:
+            model = GeoNet(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
+                           c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
+                           num_heads=self.args.num_heads, task=self.task_type if self.task_type else self.args.task,
+                           downstage=self.args.downstage)
+        else:
+            model = GeoNetV2(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
+                             c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
+                             num_heads=self.args.num_heads, downstage=self.args.downstage)
+
         ckpt = torch.load(path, map_location=torch.device(self.device))
         model.load(ckpt['model_state_dict'])
         model = model.to(self.device)
@@ -201,7 +208,7 @@ class GeoAttX_P(GeoAttX):
         print(f'data saved in {self.root_path}')
         if info_log:
             with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
-                f.write(f'反演：{save_name}\n')
+                f.write(f'QPE 反演：{save_name}\n')
         return self.root_path
 
     def predict(self, fy_npy_path):
@@ -219,6 +226,47 @@ class GeoAttX_P(GeoAttX):
             n = norm.norm(n_data, norm_type='fy')[:, 0, :, :, :]
             y_ = self.model(n, n)
             y = norm.denorm(y_, norm_type='qpe').detach().cpu().numpy()[0]
+            return y
+        except NoFileException as e:
+            os.makedirs(self.root_path, exist_ok=True)
+            with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
+                filename = e.file_name.split(os.sep)[-1]
+                file_info = prase_filename(filename)
+                f.write(f'Not exist {file_info["start"]}\n')
+            return None
+
+
+class GeoAttX_M(GeoAttX):
+    def __init__(self, model_path, root_path=None, config='predict_imerg.yml'):
+        super().__init__(config=config, root_path=root_path, task_type='prem')
+        self.model = self.load_model(model_path, version=2)
+
+    def save(self, y, save_name, info_log=True):
+        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(), dtype=np.float32,
+               print_log=False, dim_value=[{'value': ['imerg']}])
+        print(f'data saved in {self.root_path}')
+        if info_log:
+            with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+                f.write(f'Imerg 反演：{save_name}\n')
+        return self.root_path
+
+    def predict(self, fy_npy_path):
+        try:
+            print(f'正在反演:{fy_npy_path}...')
+            if not os.path.exists(fy_npy_path):
+                raise NoFileException(fy_npy_path)
+            n_data = np.load(fy_npy_path)
+            n_data = torch.from_numpy(n_data)
+            norm = PremNormalization(self.args.prec_data_path)
+            norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
+                data_to_device([norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe], self.device, self.args.fp)
+            n_data = data_to_device([n_data], self.device, self.args.fp)[0]
+            n_data = rearrange(n_data, '(b t c) h w -> b c h w', b=1)
+            n = norm.norm(n_data, fy_norm=True)[:, 0, :, :, :]
+            n_ = rearrange(n, 'b c (h dh) (w dw) -> (b dh dw) c h w', dh=2, dw=2)
+            y_ = self.model(n_)
+            y_ = rearrange(y_, '(b dh dw) c h w -> b c (h dh) (w dw)', dh=2, dw=2)
+            y = norm.denorm(y_, fy_norm=False).detach().cpu().numpy()[0]
             return y
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)

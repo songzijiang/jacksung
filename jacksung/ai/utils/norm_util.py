@@ -55,13 +55,13 @@ class PrecNormalization:
             return rearrange(data, 'b h w c->b c h w')
 
 
-class PosNormalization:
+class PremNormalization:
 
     def __init__(self, prec_data_path):
         self.mean = torch.from_numpy(
-            np.load(os.path.join(prec_data_path, 'mean.npy')).astype(np.float32))
+            np.load(os.path.join(prec_data_path, 'imerg_mean.npy')).astype(np.float32))
         self.std = torch.from_numpy(
-            np.load(os.path.join(prec_data_path, 'std.npy')).astype(np.float32))
+            np.load(os.path.join(prec_data_path, 'imerg_std.npy')).astype(np.float32))
         # self.mean = torch.Tensor(
         #     [3.6614e+03, 3.3748e+03, 3.3829e+03, 2.8368e+03, 2.5664e+03, 2.4914e+03, 2.4259e+03, 0.5723, 0, 0])
         # self.std = torch.Tensor([164.7376, 265.8857, 252.9820, 509.8994, 532.4901, 518.8191, 414.1427, 0.6308, 1, 1])
