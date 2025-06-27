@@ -266,8 +266,8 @@ class GeoAttX_M(GeoAttX):
             y_ = self.model(n_)
             y_ = rearrange(y_, '(b dh dw) c h w -> b c (h dh) (w dw)', dh=2, dw=2)
             y = norm.denorm(y_, fy_norm=False).detach().cpu().numpy()[0]
-            y[:, 0][y_[:, 1] > y[:, 2]] = 0
-            y[:, 0][y_[:, 0] < 0] = 0
+            y[:, 0][y[:, 1] > y[:, 2]] = 0
+            y[:, 0][y[:, 0] < 0] = 0
             return y[:, 0]
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
