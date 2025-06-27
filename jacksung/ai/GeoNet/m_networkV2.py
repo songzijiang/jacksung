@@ -39,7 +39,7 @@ class GeoNet(nn.Module):
         x_res.append(x)
         idx = 0
         for stage in self.body:
-            if str(stage.__class__) == "<class 'models.GeoNet.m_blockV2.FEB'>":
+            if str(stage.__class__) == "<class 'jacksung.ai.GeoNet.m_blockV2.FEB'>":
                 # 7,9
                 if idx > self.n_lgab / 2 + 1 and idx % self.downstage in [1]:
                     x += x_res.pop()
