@@ -268,7 +268,7 @@ class GeoAttX_M(GeoAttX):
             y = norm.denorm(y_, fy_norm=False).detach().cpu().numpy()[0]
             y[:, 0][y_[:, 1] > y[:, 2]] = 0
             y[:, 0][y_[:, 0] < 0] = 0
-            return y[0]
+            return y[:, 0]
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
