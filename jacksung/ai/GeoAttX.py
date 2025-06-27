@@ -260,7 +260,7 @@ class GeoAttX_M(GeoAttX):
             norm = PremNormalization(self.args.prec_data_path)
             norm.mean, norm.std = data_to_device([norm.mean, norm.std], self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
-            n_data = rearrange(n_data, '(b t c) h w -> b c h w', b=1)
+            n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
             n = norm.norm(n_data, fy_norm=True)[:, 0, :, :, :]
             n_ = rearrange(n, 'b c (h dh) (w dw) -> (b dh dw) c h w', dh=2, dw=2)
             y_ = self.model(n_)
