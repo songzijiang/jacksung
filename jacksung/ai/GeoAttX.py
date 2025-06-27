@@ -13,6 +13,7 @@ from jacksung.ai.utils.util import parse_config, data_to_device
 from jacksung.ai.GeoNet.m_network import GeoNet
 from jacksung.ai.GeoNet.m_networkV2 import GeoNet as GeoNetV2
 from jacksung.utils.exception import NoFileException, NanNPException
+import torch.nn as nn
 
 
 class GeoAttX:
@@ -262,12 +263,16 @@ class GeoAttX_M(GeoAttX):
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
             n = norm.norm(n_data, fy_norm=True)[:, :, :, :]
-            n_ = rearrange(n, 'b c (h dh) (w dw) -> (b dh dw) c h w', dh=2, dw=2)
-            y_ = self.model(n_)
-            y_ = rearrange(y_, '(b dh dw) c h w -> b c (h dh) (w dw)', dh=2, dw=2)
+            ps = nn.PixelShuffle(2)
+            ups = nn.PixelUnshuffle(2)
+            n = ups(n)
+            n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
+            y_ = self.model(n)
+            y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', dsize=4)
+            y_ = ps(y_)
             y = norm.denorm(y_, fy_norm=False).detach().cpu().numpy()[0]
-            y[:, 0][y[:, 1] > y[:, 2]] = 0
-            y[:, 0][y[:, 0] < 0] = 0
+            y[0][y[1] > y[2]] = 0
+            y[0][y[0] < 0] = 0
             return y[0]
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
