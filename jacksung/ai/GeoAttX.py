@@ -258,8 +258,7 @@ class GeoAttX_M(GeoAttX):
             n_data = np.load(fy_npy_path)
             n_data = torch.from_numpy(n_data)
             norm = PremNormalization(self.args.prec_data_path)
-            norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
-                data_to_device([norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe], self.device, self.args.fp)
+            norm.mean, norm.std = data_to_device([norm.mean, norm.std], self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b t c) h w -> b c h w', b=1)
             n = norm.norm(n_data, fy_norm=True)[:, 0, :, :, :]
