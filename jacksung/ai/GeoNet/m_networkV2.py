@@ -1,5 +1,5 @@
 import torch.nn as nn
-from models.GeoNet.m_blockV2 import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
+from jacksung.ai.GeoNet.m_blockV2 import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
 import torch
 import jacksung.utils.fastnumpy as fnp
 
