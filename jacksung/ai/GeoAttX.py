@@ -192,7 +192,7 @@ class GeoAttX_I(GeoAttX):
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
                 file_info = prase_filename(filename)
-                f.write(f'{e.__class__}: {file_info["start"]}\n')
+                f.write(f'{e.__class__}: {file_info["start"]} {e.file_name}\n')
             return {}
         return porcess_list
 
@@ -232,7 +232,7 @@ class GeoAttX_P(GeoAttX):
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
                 file_info = prase_filename(filename)
-                f.write(f'Not exist {file_info["start"]}\n')
+                f.write(f'Not exist {file_info["start"]} {e.file_name}\n')
             return None
 
 
@@ -273,5 +273,5 @@ class GeoAttX_M(GeoAttX):
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
                 file_info = prase_filename(filename)
-                f.write(f'Not exist {file_info["start"]}\n')
+                f.write(f'Not exist {file_info["start"]} {e.file_name}\n')
             return None
