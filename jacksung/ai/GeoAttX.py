@@ -20,6 +20,7 @@ class GeoAttX:
     def __init__(self, config=None, root_path=None, task_type=None):
         self.root_path = None
         self.timestamp = None
+        self.dir_name = None
         self.device, self.args = parse_config(config)
         self.task_type = task_type
         self.set_root_path(root_path)
@@ -27,11 +28,15 @@ class GeoAttX:
     def get_root_path(self):
         return self.root_path
 
+    def get_dir_name(self):
+        return self.dir_name
+
     def set_root_path(self, root_path=None, dir_name=None):
         self.timestamp = cur_timestamp_str()
         root_path = root_path if root_path else self.args.save_path
         dir_name = dir_name if dir_name else self.task_type + '-' + self.args.model + '-' + self.timestamp + '_' + str(
             random.randint(1000, 9999))
+        self.dir_name = dir_name
         self.root_path = os.path.join(root_path, dir_name)
 
     def load_model(self, path, version=1):
