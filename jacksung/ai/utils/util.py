@@ -211,7 +211,7 @@ def make_fig(file_name, root_path, out_folder=None, tz='UTC',
         file_path = os.path.join(root_path, file_name)
         with rasterio.open(file_path) as dataset:
             elevation = dataset.read(1)
-        elevation[elevation < filter] = np.nan
+        elevation[elevation <= filter] = np.nan
     elevation, colors = _get_color_normalization(elevation, colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', colors)
     # 添加各种特征
