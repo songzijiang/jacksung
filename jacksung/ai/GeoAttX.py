@@ -276,13 +276,13 @@ class GeoAttX_M(GeoAttX):
             y_ = self.model(n)
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', dsize=4)
             y_ = ps(y_)
-            y = norm.denorm(y_, fy_norm=False).detach().cpu().numpy()[0]
+            y = norm.denorm(y_, fy_norm=False)[0]
             y[0][y[1] > y[2]] = 0
             y[0][y[0] < 0] = 0
             y = rearrange(y[0], '(b h) w -> b h w', b=1)
             _, H, W = y.shape
             y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
-            return y
+            return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
