@@ -108,7 +108,7 @@ class GeoAttX_I(GeoAttX):
 
     def get_path_by_filename(self, file_name):
         file_info = prase_filename(file_name)
-        return f'{self.data_path}/downloaded_file/{file_info["start"].year}/{file_info["start"].month}/{file_info["start"].day}/{file_name}'
+        return f'{self.data_path}{os.sep}downloaded_file{os.sep}{file_info["start"].year}{os.sep}{file_info["start"].month}{os.sep}{file_info["start"].day}{os.sep}{file_name}'
         # return f'{self.data_path}/{file_name}'
 
     def numpy2tensor(self, f_data):
@@ -290,15 +290,3 @@ class GeoAttX_M(GeoAttX):
                 file_info = prase_filename(filename)
                 f.write(f'Not exist {file_info["start"]} {e.file_name}\n')
             return None
-
-
-if __name__ == '__main__':
-    smooth = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
-    x = np.array([[[1, 2, 3, 4, 5, 6, 7, 8, 9], [2, 4, 6, 5, 1, 3, 1, 9, 8], [6, 7, 8, 9, 1, 2, 3, 4, 5]]])
-    x = x.astype(np.float32)
-    x = torch.from_numpy(x)
-    print(x)
-    _, H, W = x.shape
-    x[0, 1:H - 1, 1:W - 1] = smooth(x)[0, 1:H - 1, 1:W - 1]
-
-    print(x)
