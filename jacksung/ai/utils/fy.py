@@ -267,3 +267,13 @@ def make_fynp(root_path, target_dir, time_set):
     with open(f'err.log', 'w') as f:
         f.writelines(err_list)
     print(f'all done, {len(err_list)} in err.log')
+
+
+# 根据日期获取星下点位置
+def get_filename_by_date(file_date):
+    if file_date < datetime(2024, 3, 1):
+        ld = 1330
+    else:
+        ld = 1050
+    filename = rf'FY4B-_AGRI--_N_DISK_{ld}E_L1-_FDI-_MULT_NOM_{file_date.strftime("%Y%m%d%H%M%S")}_{(file_date + timedelta(minutes=14, seconds=59)).strftime("%Y%m%d%H%M%S")}_4000M_V0001.HDF'
+    return filename
