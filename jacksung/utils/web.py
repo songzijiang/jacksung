@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
     if tmp_path:
         options.add_argument("crash-dumps-dir=" + tmp_path)
-    # options.add_argument("--no-sandbox")
+    options.add_argument("--no-sandbox")
     # options.add_argument("--auto-open-devtools-for-tabs")
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-web-security")  # 禁用Web安全
