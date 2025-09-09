@@ -6,7 +6,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from jacksung.utils.log import oprint as print
 from selenium.webdriver.common.by import By
-import undetected_chromedriver as uc
 
 
 def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
