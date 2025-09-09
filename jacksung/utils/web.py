@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from jacksung.utils.log import oprint as print
 from selenium.webdriver.common.by import By
+import undetected_chromedriver as uc
 
 
 def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
@@ -41,7 +42,8 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
         # driver_path = os.path.expanduser("~/chrome/chromedriver.exe")
     else:
         driver_path = os.path.expanduser("~/chrome/chromedriver")
-    driver = webdriver.Chrome(service=Service(driver_path) if driver_path else None, options=options)
+    driver = uc.Chrome(service=Service(driver_path) if driver_path else None, options=options)
+    # driver = webdriver.Chrome(service=Service(driver_path) if driver_path else None, options=options)
     # driver.maximize_window()
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(10)
