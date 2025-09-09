@@ -12,7 +12,7 @@ import undetected_chromedriver as uc
 def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
     if tmp_path:
         options.add_argument("crash-dumps-dir=" + tmp_path)
-    options.add_argument("--no-sandbox")
+    # options.add_argument("--no-sandbox")
     # options.add_argument("--auto-open-devtools-for-tabs")
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-web-security")  # 禁用Web安全
@@ -21,6 +21,7 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     options.add_argument('--ignore-ssl-errors=yes')
     options.add_argument('--allow-insecure-localhost')
     options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--user-agent=Mozilla/5.0')  # 设置User-Agent
     options.add_argument("--lang=zh-CN")  # 将语言设置为简体中文，英文为en-US
     options.add_experimental_option("detach", True)
     if download_dir:
@@ -42,8 +43,8 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
         # driver_path = os.path.expanduser("~/chrome/chromedriver.exe")
     else:
         driver_path = os.path.expanduser("~/chrome/chromedriver")
-    driver = uc.Chrome(service=Service(driver_path) if driver_path else None, options=options)
-    # driver = webdriver.Chrome(service=Service(driver_path) if driver_path else None, options=options)
+    # driver = uc.Chrome(service=Service(driver_path) if driver_path else None, options=options)
+    driver = webdriver.Chrome(service=Service(driver_path) if driver_path else None, options=options)
     # driver.maximize_window()
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(10)
