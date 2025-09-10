@@ -95,6 +95,7 @@ class ecnu_login:
         except Exception as e:
             print('登录失败！')
             traceback.print_exc()
+            driver.save_screenshot('err.png')
             return False
 
     def logout(self):
