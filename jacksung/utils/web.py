@@ -30,7 +30,8 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
             "download.default_directory": download_dir,
             "download.prompt_for_download": False,
             "safebrowsing.enabled": True,  # 允许“不安全”文件自动下载
-            "safebrowsing.disable_download_protection": True  # 禁用“可能有害文件”的拦截
+            "safebrowsing.disable_download_protection": True,  # 禁用“可能有害文件”的拦截
+            "intl.accept_languages": "zh-CN,zh"
             # "download.directory_upgrade": True,
         })
     options.set_capability('pageLoadStrategy', 'none')
