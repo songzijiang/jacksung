@@ -21,7 +21,8 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     options.add_argument('--ignore-ssl-errors=yes')
     options.add_argument('--allow-insecure-localhost')
     options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--user-agent=Mozilla/5.0')  # 设置User-Agent
+    options.add_argument(
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36')  # 设置User-Agent
     options.add_argument("--lang=zh-CN")  # 将语言设置为简体中文，英文为en-US
     options.add_experimental_option("detach", True)
     if download_dir:
