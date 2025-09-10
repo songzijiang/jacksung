@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 
 
 def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
+    options.add_argument("--disable-blink-features=AutomationControlled")
     if tmp_path:
         options.add_argument("crash-dumps-dir=" + tmp_path)
     options.add_argument("--no-sandbox")
@@ -45,6 +46,13 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     # driver = uc.Chrome(service=Service(driver_path) if driver_path else None, options=options)
     driver = webdriver.Chrome(service=Service(driver_path) if driver_path else None, options=options)
     # driver.maximize_window()
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => undefined
+            })
+        """
+    })
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(10)
     print(f'请求地址：{url}')
