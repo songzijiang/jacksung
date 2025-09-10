@@ -22,6 +22,7 @@ class ecnu_login:
         options.add_argument('--user-agent=Mozilla/5.0 HAHA')
         options.add_experimental_option("detach", True)
         options.add_argument('--headless')  # 浏览器隐式启动
+        options.add_argument("--window-size=1920,1080")
         self.url = "https://login.ecnu.edu.cn/"
         self.driver = None
         if tmp_path:
@@ -75,6 +76,7 @@ class ecnu_login:
             driver.refresh()
             time.sleep(2)
             username_ele = driver.find_element(By.ID, "username")
+            print(rf'当前登录账户{username_ele}')
             password_ele = driver.find_element(By.ID, "password")
             username_ele.send_keys(username)
             password_ele.send_keys(password)
@@ -145,6 +147,3 @@ def main():
         login.login(args.u, args.p)
     elif args.t == 'logout':
         login.logout()
-
-
-
