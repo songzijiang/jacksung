@@ -8,7 +8,7 @@ from jacksung.utils.log import oprint as print
 from selenium.webdriver.common.by import By
 
 
-def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
+def make_driver(url=None, is_headless=False, tmp_path=None, download_dir=None, options=webdriver.ChromeOptions()):
     options.add_argument("--disable-blink-features=AutomationControlled")
     if tmp_path:
         options.add_argument("crash-dumps-dir=" + tmp_path)
@@ -57,6 +57,7 @@ def make_driver(url, is_headless=False, tmp_path=None, download_dir=None, option
     })
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(10)
-    print(f'请求地址：{url}')
-    driver.get(url)
+    if url is not None:
+        print(f'请求地址：{url}')
+        driver.get(url)
     return driver
