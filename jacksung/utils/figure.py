@@ -95,6 +95,7 @@ def _make_fig(file_np,
               zoom_docker=(300, 730),
               # 图片清晰度
               dpi=500,
+              xy_axis=None,
               # 添加各种特征
               # 自然海岸界,其他自带要素的参考cartopy
               # '10m', '50m', or '110m'
@@ -103,6 +104,8 @@ def _make_fig(file_np,
                                                    linewidth=0.4), cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
               border_type=None):
     # corp = [92, 31, 542, 456]
+    if xy_axis is None:
+        xy_axis = area
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     # 设置经纬度范围,限定为中国
     # 注意指定crs关键字,否则范围不一定完全准确
@@ -129,9 +132,9 @@ def _make_fig(file_np,
         ax.gridlines(line_style=border_type)
     # 设置大刻度和小刻度
     tick_proj = ccrs.PlateCarree()
-    ax.set_xticks(np.arange(area[0][0], area[0][1] + 1, area[0][2]), crs=tick_proj)
+    ax.set_xticks(np.arange(xy_axis[0][0], xy_axis[0][1] + 1, xy_axis[0][2]), crs=tick_proj)
     # ax.set_xticks(np.arange(-180, 180 + 30, 30), minor=True, crs=tick_proj)
-    ax.set_yticks(np.arange(area[1][0], area[1][1] + 1, area[1][2]), crs=tick_proj)
+    ax.set_yticks(np.arange(xy_axis[1][0], xy_axis[1][1] + 1, xy_axis[1][2]), crs=tick_proj)
     # ax.set_yticks(np.arange(-90, 90 + 15, 15), minor=True, crs=tick_proj)
     # 利用Formatter格式化刻度标签
     ax.xaxis.set_major_formatter(LongitudeFormatter())
