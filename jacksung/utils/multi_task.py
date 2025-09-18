@@ -113,12 +113,12 @@ class MultiTasks:
 
 def worker(i):
     print(i)
-    time.sleep(1)
+    time.sleep(10)
     return i * 2
 
 
 if __name__ == '__main__':
     mt = MultiTasks(10, pool=type_thread)
-    for i in range(100):
+    for i in range(10):
         mt.add_task(i, worker, [i])
-    mt.execute_task(print_percent=False)
+    mt.execute_task_nowait()

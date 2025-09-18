@@ -6,6 +6,8 @@ from jacksung.utils.multi_task import ThreadingLock
 from PIL import ImageFont
 from osgeo import gdal, osr
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from random import randint
 import os
