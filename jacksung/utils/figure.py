@@ -146,6 +146,7 @@ def _make_fig(file_np,
     np_sum_w = np.nonzero(np_data.sum(axis=(0, 2)))[0]
 
     crop_png(save_name, left=np_sum_w[0], top=np_sum_h[0], right=np_sum_w[-1], bottom=np_sum_h[-1])
+    plt.close()
     return colors
     # plt.show()
 
