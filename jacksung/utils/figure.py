@@ -161,6 +161,7 @@ def _make_fig(file_np,
 
 def make_fig(data,
              area,
+             xy_axis=None,
              file_title='',
              save_name='figure_default.png',
              colors=None,
@@ -176,7 +177,7 @@ def make_fig(data,
              colormap_r_margin=200,
              colormap_unit=''):
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
-                       features=features, border_type=border_type,
+                       features=features, border_type=border_type, xy_axis=xy_axis,
                        file_title=file_title, save_name=save_name, area=area, colors=colors)
     img = cv2.imread(save_name)
     h, w, c = img.shape
