@@ -77,9 +77,6 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=
     return colors_map
 
 
-make_fig_lock = ThreadingLock()
-
-
 def _make_fig(file_np,
               # [经度起,经度止,经度步长],[纬度起,纬度止,纬度步长]
               # np数据会自动填充整个图形,确保数据范围和area范围一致
@@ -102,7 +99,7 @@ def _make_fig(file_np,
               features=(
                       cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='black', facecolor='none',
                                                    linewidth=0.4), cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
-              border_type=None):
+              border_type=None, make_fig_lock=None):
     # corp = [92, 31, 542, 456]
     if xy_axis is None:
         xy_axis = area
@@ -111,7 +108,8 @@ def _make_fig(file_np,
     # 注意指定crs关键字,否则范围不一定完全准确
     extents = [area[0][0], area[0][1], area[1][0], area[1][1]]
     proj = ccrs.PlateCarree()
-    make_fig_lock.acquire()
+    if make_fig_lock is not None:
+        make_fig_lock.acquire()
     fig = plt.figure(dpi=dpi)
     ax = fig.add_subplot(111, projection=proj)
     ax.set_extent(extents, crs=proj)
@@ -154,7 +152,8 @@ def _make_fig(file_np,
 
     crop_png(save_name, left=np_sum_w[0], top=np_sum_h[0], right=np_sum_w[-1], bottom=np_sum_h[-1])
     plt.close()
-    make_fig_lock.release()
+    if make_fig_lock is not None:
+        make_fig_lock.release()
     return colors
     # plt.show()
 
