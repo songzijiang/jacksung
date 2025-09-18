@@ -175,6 +175,7 @@ def make_fig(data,
     white_block = make_block(10, w)
     merge_img = concatenate_images([img, white_block, cm], direction='v')
     cv2.imwrite(save_name, merge_img)
+    return colors
 
 
 if __name__ == '__main__':
