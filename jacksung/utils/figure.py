@@ -149,7 +149,8 @@ def _make_fig(file_np,
     plt.xticks(fontsize=font_size)
     plt.yticks(fontsize=font_size)
     # plt.title(fontsize=font_size)
-    ax.set_extent(extents, crs=proj)
+    # 关键修复：set_extent的crs应该是数据坐标系
+    ax.set_extent(extents, crs=data_crs)
     plt.savefig(save_name)
     if zoom_rectangle is not None:
         read_png = cv2.imread(save_name)
