@@ -115,6 +115,7 @@ def _make_fig(file_np,
     else:
         central_longitude = 0
     proj = ccrs.PlateCarree(central_longitude=central_longitude)
+    data_crs = ccrs.PlateCarree()
     if make_fig_lock is not None:
         make_fig_lock.acquire()
     fig = plt.figure(dpi=dpi)
@@ -130,7 +131,7 @@ def _make_fig(file_np,
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)
-    ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap)
+    ax.imshow(elevation, origin='upper', extent=extents, transform=data_crs, cmap=cmap)
     # 添加网格线
     if border_type is not None:
         # ax.gridlines(line_style='--')
