@@ -7,6 +7,7 @@ from PIL import ImageFont
 from osgeo import gdal, osr
 import numpy as np
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from random import randint
@@ -151,7 +152,7 @@ def _make_fig(file_np,
     np_data = cv2.imread(save_name) - 255
     np_sum_h = np.nonzero(np_data.sum(axis=(1, 2)))[0]
     np_sum_w = np.nonzero(np_data.sum(axis=(0, 2)))[0]
-
+    print(np_sum_h, np_sum_w)
     crop_png(save_name, left=np_sum_w[0], top=np_sum_h[0], right=np_sum_w[-1], bottom=np_sum_h[-1])
     plt.close()
     if make_fig_lock is not None:
