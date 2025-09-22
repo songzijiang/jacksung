@@ -130,7 +130,7 @@ def _make_fig(file_np,
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)
-    ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap)
+    ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap, ccrs=proj)
     # 添加网格线
     if border_type is not None:
         # ax.gridlines(line_style='--')
