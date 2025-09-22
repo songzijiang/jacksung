@@ -119,7 +119,7 @@ def _make_fig(file_np,
         make_fig_lock.acquire()
     fig = plt.figure(dpi=dpi)
     ax = fig.add_subplot(111, projection=proj)
-    ax.set_extent(extents, crs=proj)
+
     if colors is None:
         np_max, np_min = np.nanmax(file_np), np.nanmin(file_np)
         break_value = (np_max - np_min) / 4
@@ -130,7 +130,7 @@ def _make_fig(file_np,
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)
-    ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap, ccrs=proj)
+    ax.imshow(elevation, origin='upper', extent=extents, transform=proj, cmap=cmap)
     # 添加网格线
     if border_type is not None:
         # ax.gridlines(line_style='--')
@@ -148,6 +148,7 @@ def _make_fig(file_np,
     plt.xticks(fontsize=font_size)
     plt.yticks(fontsize=font_size)
     # plt.title(fontsize=font_size)
+    ax.set_extent(extents, crs=proj)
     plt.savefig(save_name)
     if zoom_rectangle is not None:
         read_png = cv2.imread(save_name)
