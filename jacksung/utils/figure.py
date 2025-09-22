@@ -110,7 +110,11 @@ def _make_fig(file_np,
     # 设置经纬度范围,限定为中国
     # 注意指定crs关键字,否则范围不一定完全准确
     extents = [area[0][0], area[0][1], area[1][0], area[1][1]]
-    proj = ccrs.PlateCarree(central_longitude=180)
+    if area[1][0] > 180:
+        central_longitude = 180
+    else:
+        central_longitude = 0
+    proj = ccrs.PlateCarree(central_longitude=central_longitude)
     if make_fig_lock is not None:
         make_fig_lock.acquire()
     fig = plt.figure(dpi=dpi)
