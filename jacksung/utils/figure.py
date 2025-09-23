@@ -134,7 +134,6 @@ def _make_fig(file_np,
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
     # 用色带给数据上色,输入单通道,返回三通道图
     elevation, new_colors = _get_color_normalization(file_np, colors)
-    print(new_colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)

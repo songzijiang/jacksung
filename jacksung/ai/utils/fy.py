@@ -118,7 +118,7 @@ def get_reference(ld):
 
 def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140, 10), (20, 60, 10))):
     lon_d = int((ld - (area[0][0] + area[0][1]) / 2) * 20)
-    lat_d = int((0 - (area[1][0] + area[1][1]) / 2) * 20)
+    lat_d = int(((area[1][0] + area[1][1]) / 2) * 20)
     np_data = getNPfromHDF(file_path, file_type, lock)
     np_data = np_data[:, 800 - lat_d:1600 - lat_d, 800 - lon_d:1600 - lon_d]
     return np_data
