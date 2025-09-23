@@ -65,11 +65,11 @@ class Metrics:
         self.rr.reset()
         return rr / len(preds)
 
-    def calc_p(self, preds, targets, exclude_zero=False):
+    def calc_p(self, preds, target, exclude_zero=False):
         p = 0
         count = 0
         for i in range(len(preds)):
-            pred, target = preds[i].flatten(), targets[i].flatten()
+            pred, target = preds[i].flatten(), target[i].flatten()
             if exclude_zero:
                 mask = target != 0
                 pred = pred[mask]
@@ -90,6 +90,51 @@ class Metrics:
         if print_log:
             print(rf'p: {p} rr: {rr} rmse: {rmse} ssim: {ssim} psnr: {psnr}')
         return {'p': p, 'rr': rr, 'rmse': rmse, 'ssim': ssim, 'psnr': psnr}
+
+    def calculate_rain_metrics(self, preds, target, threshold=0.1):
+        """
+        使用flatten()批量计算多张降雨图的POD、FAR、ACC、CSI指标
+
+        参数:
+            preds: 预测的降雨tensor，形状为[样本数, 高度, 宽度]
+            target: 观测的降雨tensor，形状与preds相同
+            threshold: 降雨事件的阈值，默认0.1mm
+
+        返回:
+            metrics: 包含每个样本指标的字典
+        """
+        # 1. 将每个样本的空间维度展平（[样本数, 高度, 宽度] → [样本数, 像素总数]）
+        preds_flat = preds.flatten(start_dim=1)  # 从第1维开始展平（保留样本维度）
+        target_flat = target.flatten(start_dim=1)
+
+        # 2. 二值化（1=有雨，0=无雨）
+        preds_binary = (preds_flat >= threshold).float()
+        target_binary = (target_flat >= threshold).float()
+
+        # 3. 计算混淆矩阵元素（按样本维度求和）
+        TP = torch.sum(preds_binary * target_binary, dim=1)  # 每个样本的TP总和
+        FP = torch.sum(preds_binary * (1 - target_binary), dim=1)
+        TN = torch.sum((1 - preds_binary) * (1 - target_binary), dim=1)
+        FN = torch.sum((1 - preds_binary) * target_binary, dim=1)
+
+        # 4. 计算指标（处理分母为0的情况）
+        POD = TP / (TP + FN)
+        FAR = FP / (TP + FP)
+        ACC = (TP + TN) / (TP + FP + TN + FN)
+        CSI = TP / (TP + FP + FN)
+
+        # 5. 标记无效值为NaN
+        POD = torch.where((TP + FN) == 0, torch.nan, POD)
+        FAR = torch.where((TP + FP) == 0, torch.nan, FAR)
+        ACC = torch.where((TP + FP + TN + FN) == 0, torch.nan, ACC)
+        CSI = torch.where((TP + FP + FN) == 0, torch.nan, CSI)
+
+        return {
+            'POD': POD,
+            'FAR': FAR,
+            'ACC': ACC,
+            'CSI': CSI
+        }
 
 
 def img2tensor(img):
@@ -123,6 +168,4 @@ if __name__ == '__main__':
     m = Metrics()
     AUROC = m.calc_AUROC(preds, target)
     print(AUROC)
-    # img1 = img2tensor(r'C:\Users\ECNU\Desktop\fyp\target_20231220_053000-13.tif')
-    # img2 = img2tensor(r'C:\Users\ECNU\Desktop\fyp\20231220_053000-13-4.tif')
-    # m.print_metrics(img2, img1)
+    print(m.calculate_rain_metrics(preds, target))
