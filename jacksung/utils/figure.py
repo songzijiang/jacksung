@@ -47,8 +47,6 @@ def _get_color_normalization(data, colors):
             value = 1
         else:
             value = (color[0] - min_value) / (max_value - min_value)
-
-            print(rf'color[0] {color[0]}, min_value {min_value}, max_value {max_value}')
         new_colors.append([value, color[1]])
     return data, new_colors
 
@@ -134,6 +132,7 @@ def _make_fig(file_np,
         break_value = (np_max - np_min) / 4
         colors = ((np_min, '#1E90FF'), (np_min + break_value, '#1874CD'), (np_min + 2 * break_value, '#3A5FCD'),
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
+        print(rf'break_value {break_value}, np_max {np_max}, np_min {np_min}')
     # 用色带给数据上色,输入单通道,返回三通道图
     elevation, new_colors = _get_color_normalization(file_np, colors)
     print(new_colors)
