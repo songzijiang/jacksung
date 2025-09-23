@@ -129,12 +129,7 @@ class Metrics:
         ACC = torch.where((TP + FP + TN + FN) == 0, torch.nan, ACC)
         CSI = torch.where((TP + FP + FN) == 0, torch.nan, CSI)
 
-        return {
-            'POD': POD,
-            'FAR': FAR,
-            'ACC': ACC,
-            'CSI': CSI
-        }
+        return POD, FAR, ACC, CSI
 
 
 def img2tensor(img):
