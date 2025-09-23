@@ -71,6 +71,8 @@ def np2tif(input_data, save_path='np2tif_dir', out_name='', left=None, top=None,
            dim_value=None, coord=None, print_log=True):
     if type(input_data) == str:
         np_data = np.load(input_data)
+        if np_data is None:
+            print(f'load {input_data} is None')
     else:
         np_data = input_data
     shape = np_data.shape

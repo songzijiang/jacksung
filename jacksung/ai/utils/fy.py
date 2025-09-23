@@ -152,6 +152,7 @@ def getNPfromHDF(hdf_path, file_type='FDI', lock=None):
     else:
         np_data = None
         in_out_idx = None
+        raise Exception(rf'file_type {file_type} err')
     ds.close()
     r = reference_cache.get_key_in_cache(file_info['position'])
     if r is None:
