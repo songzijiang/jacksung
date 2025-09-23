@@ -47,7 +47,7 @@ def _get_color_normalization(data, colors):
             value = 1
         else:
             value = (color[0] - min_value) / (max_value - min_value)
-            if value == np.nan:
+            if value is np.nan:
                 print(rf'color error, min_value {min_value}, max_value {max_value}')
         new_colors.append([value, color[1]])
     return data, new_colors
