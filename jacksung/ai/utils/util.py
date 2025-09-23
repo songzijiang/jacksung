@@ -189,6 +189,7 @@ def make_fig(file_name, root_path, out_folder=None, tz='UTC',
              area=((100, 140, 10), (20, 60, 10)), font_size=20, corp=(0, 0, None, None),
              zoom_rectangle=(310 * 5, 300 * 5, 50 * 5, 40 * 5), docker=(300, 730), dpi=500, filter=0.3, exposure=None):
     # corp = [92, 31, 542, 456]
+    print('过期的make_figure方法！')
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     extents = [100, 140, 20, 60]
     proj = ccrs.PlateCarree()

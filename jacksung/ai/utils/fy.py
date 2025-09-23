@@ -44,8 +44,8 @@ def getFY_coord_min(ld):
                       bottom=min_x_range['bottom'], h=min_x_range['height'], w=min_x_range['width'])
 
 
-def getFY_coord_clip():
-    return Coordinate(left=100, top=60, right=140, bottom=20, h=800, w=800)
+def getFY_coord_clip(area=((100, 140, 10), (20, 60, 10))):
+    return Coordinate(left=area[0][0], top=area[1][1], right=area[0][1], bottom=area[1][0], h=800, w=800)
 
 
 # FY4星下点行列号转经纬度
@@ -116,10 +116,11 @@ def get_reference(ld):
     return spatial_reference, gcps_list
 
 
-def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None):
-    d = (ld - 120) * 20
+def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140, 10), (20, 60, 10))):
+    lon_d = (ld - (area[0][0] + area[0][1]) / 2) * 20
+    lat_d = (0 - (area[1][0] + area[1][1]) / 2) * 20
     np_data = getNPfromHDF(file_path, file_type, lock)
-    np_data = np_data[:, 0:800, 800 - d:1600 - d]
+    np_data = np_data[:, 800 - lat_d:1600 - lat_d, 800 - lon_d:1600 - lon_d]
     return np_data
 
 

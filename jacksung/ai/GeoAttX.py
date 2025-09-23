@@ -17,13 +17,14 @@ import torch.nn as nn
 
 
 class GeoAttX:
-    def __init__(self, config=None, root_path=None, task_type=None):
+    def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10))):
         self.root_path = None
         self.timestamp = None
         self.dir_name = None
         self.device, self.args = parse_config(config)
         self.task_type = task_type
         self.set_root_path(root_path)
+        self.area = area
 
     def get_root_path(self):
         return self.root_path
@@ -59,8 +60,9 @@ class GeoAttX:
 
 
 class GeoAttX_I(GeoAttX):
-    def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml'):
-        super().__init__(config=config, root_path=root_path, task_type='pred')
+    def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
+                 area=((100, 140, 10), (20, 60, 10))):
+        super().__init__(config=config, root_path=root_path, task_type='pred', area=area)
         self.f, self.n, self.ys = None, None, None
         self.data_path = data_path
         self.x1 = self.load_model(x1_path)
@@ -76,7 +78,7 @@ class GeoAttX_I(GeoAttX):
         ld = int(file_info["position"])
         for idx, (k, y) in enumerate(ys.items()):
             # coord = getFY_coord_min(ld)
-            coord = getFY_coord_clip()
+            coord = getFY_coord_clip(self.area)
             np2tif(y, save_path=self.root_path, out_name=f'{k.strftime("%Y%m%d_%H%M%S")}', coord=coord,
                    dtype=np.float32, print_log=False, dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
             td = k - file_info['start']
@@ -84,8 +86,8 @@ class GeoAttX_I(GeoAttX):
             target_filename = self.get_filename(file_name, mins)
             p_path = self.get_path_by_filename(target_filename)
             if idx >= 1 and os.path.exists(p_path):
-                coord = getFY_coord_clip()
-                p_data = getNPfromHDFClip(self.ld, p_path)
+                coord = getFY_coord_clip(self.area)
+                p_data = getNPfromHDFClip(self.ld, p_path, super().area)
                 if p_data is not None:
                     p_data = p_data[2:, :, :]
                     np2tif(p_data, save_path=self.root_path, out_name=f'target_{k.strftime("%Y%m%d_%H%M%S")}',
@@ -122,7 +124,7 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path)
+        f_data = getNPfromHDFClip(self.ld, f_path, super().area)
         if f_data is not None:
             f_data = f_data[2:, :, :]
         else:
@@ -204,12 +206,12 @@ class GeoAttX_I(GeoAttX):
 
 
 class GeoAttX_P(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_qpe.yml'):
-        super().__init__(config=config, root_path=root_path, task_type='prec')
+    def __init__(self, model_path, root_path=None, config='predict_qpe.yml', area=((100, 140, 10), (20, 60, 10))):
+        super().__init__(config=config, root_path=root_path, task_type='prec', area=area)
         self.model = self.load_model(model_path)
 
     def save(self, y, save_name, info_log=True):
-        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(), dtype=np.float32,
+        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['qpe']}])
         print(f'data saved in {self.root_path}')
         if info_log:
@@ -243,12 +245,12 @@ class GeoAttX_P(GeoAttX):
 
 
 class GeoAttX_M(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_imerg.yml'):
-        super().__init__(config=config, root_path=root_path, task_type='prem')
+    def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10))):
+        super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
         self.model = self.load_model(model_path, version=2)
 
     def save(self, y, save_name, info_log=True):
-        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(), dtype=np.float32,
+        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['imerg']}])
         print(f'data saved in {self.root_path}')
         if info_log:
