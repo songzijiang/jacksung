@@ -124,7 +124,7 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path, self.area)
+        f_data = getNPfromHDFClip(self.ld, f_path, area=self.area)
         if f_data is not None:
             f_data = f_data[2:, :, :]
         else:
