@@ -40,8 +40,16 @@ def _get_color_normalization(data, colors):
     data[data > max_value] = max_value
     data = (data - min_value) / (max_value - min_value)
     new_colors = []
-    for color in colors:
-        new_colors.append([(color[0] - min_value) / (max_value - min_value), color[1]])
+    for idx, color in enumerate(colors):
+        if idx == 0:
+            value = 0
+        elif idx == len(colors) - 1:
+            value = 1
+        else:
+            value = (color[0] - min_value) / (max_value - min_value)
+            if value == np.nan:
+                value = 0
+        new_colors.append([value, color[1]])
     return data, new_colors
 
 
@@ -128,7 +136,6 @@ def _make_fig(file_np,
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
     # 用色带给数据上色,输入单通道,返回三通道图
     elevation, new_colors = _get_color_normalization(file_np, colors)
-    print(new_colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)
