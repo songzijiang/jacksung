@@ -132,7 +132,6 @@ def _make_fig(file_np,
         break_value = (np_max - np_min) / 4
         colors = ((np_min, '#1E90FF'), (np_min + break_value, '#1874CD'), (np_min + 2 * break_value, '#3A5FCD'),
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
-        print(rf'break_value {break_value}, np_max {np_max}, np_min {np_min}')
     # 用色带给数据上色,输入单通道,返回三通道图
     elevation, new_colors = _get_color_normalization(file_np, colors)
     print(new_colors)
