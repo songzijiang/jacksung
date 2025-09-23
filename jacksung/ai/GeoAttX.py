@@ -87,7 +87,7 @@ class GeoAttX_I(GeoAttX):
             p_path = self.get_path_by_filename(target_filename)
             if idx >= 1 and os.path.exists(p_path):
                 coord = getFY_coord_clip(self.area)
-                p_data = getNPfromHDFClip(self.ld, p_path, super().area)
+                p_data = getNPfromHDFClip(self.ld, p_path, self.area)
                 if p_data is not None:
                     p_data = p_data[2:, :, :]
                     np2tif(p_data, save_path=self.root_path, out_name=f'target_{k.strftime("%Y%m%d_%H%M%S")}',
@@ -124,7 +124,7 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path, super().area)
+        f_data = getNPfromHDFClip(self.ld, f_path, self.area)
         if f_data is not None:
             f_data = f_data[2:, :, :]
         else:
