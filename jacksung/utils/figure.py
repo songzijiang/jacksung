@@ -133,11 +133,12 @@ def _make_fig(file_np,
         colors = ((np_min, '#1E90FF'), (np_min + break_value, '#1874CD'), (np_min + 2 * break_value, '#3A5FCD'),
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
     # 用色带给数据上色,输入单通道,返回三通道图
-    elevation, new_colors = _get_color_normalization(file_np, colors)
+    data_np, new_colors = _get_color_normalization(file_np, colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
     for feature in features:
         ax.add_feature(feature)
-    ax.imshow(elevation, origin='upper', extent=extents, transform=data_crs, cmap=cmap)
+    ax.imshow(data_np, origin='upper', extent=extents, transform=data_crs, cmap=cmap, vmin=new_colors[0][0],
+              vmax=new_colors[-1][0])
     # 添加网格线
     if border_type is not None:
         # ax.gridlines(line_style='--')
