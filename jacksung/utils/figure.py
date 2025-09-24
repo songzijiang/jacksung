@@ -69,14 +69,14 @@ def _get_color_position(value, colors):
     return np.array((b, g, r))
 
 
-def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=150):
+def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=150, round_digits=1):
     colors_map = np.zeros((h, w, 3), dtype=np.uint8) + 255
     w = w - l_margin - r_margin
     for i in range(l_margin, w + l_margin):
         i = i - l_margin
         colors_map[:h - 150, i + l_margin] = _get_color_position(i / w, colors)
         if i in [0, w // 2, w - 1]:
-            text = str(round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0], 1))
+            text = str(round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0], round_digits))
             if i == 0:
                 text += unit
             colors_map = draw_text(colors_map, (i - 100 + l_margin, h - 150),
@@ -197,13 +197,16 @@ def make_fig(data,
              border_type=None,
              colormap_l_margin=300,
              colormap_r_margin=200,
+             cm_font_size=150,
+             round_digits=1,
              colormap_unit=''):
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
                        features=features, border_type=border_type, xy_axis=xy_axis,
                        file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only)
     img = cv2.imread(save_name)
     h, w, c = img.shape
-    cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin)
+    cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin,
+                        font_size=cm_font_size, round_digits=round_digits)
     white_block = make_block(10, w)
     merge_img = concatenate_images([img, white_block, cm], direction='v')
     cv2.imwrite(save_name, merge_img)
