@@ -76,7 +76,10 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=
         i = i - l_margin
         colors_map[:h - 150, i + l_margin] = _get_color_position(i / w, colors)
         if i in [0, w // 2, w - 1]:
-            text = str(round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0], round_digits))
+            text_value = round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0], round_digits)
+            if round_digits == 0:
+                text_value = int(text_value)
+            text = str(text_value)
             if i == 0:
                 text += unit
             colors_map = draw_text(colors_map, (i - 100 + l_margin, h - 150),
