@@ -186,6 +186,7 @@ def make_fig(data,
              file_title='',
              save_name='figure_default.png',
              colors=None,
+             colors_only=None,
              font_size=15,
              zoom_rectangle=None,
              zoom_docker=(300, 730),
@@ -199,7 +200,7 @@ def make_fig(data,
              colormap_unit=''):
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
                        features=features, border_type=border_type, xy_axis=xy_axis,
-                       file_title=file_title, save_name=save_name, area=area, colors=colors)
+                       file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only)
     img = cv2.imread(save_name)
     h, w, c = img.shape
     cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin)
