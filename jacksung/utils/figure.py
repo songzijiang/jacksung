@@ -93,6 +93,7 @@ def _make_fig(file_np,
               # 色带范围,请给出实际的数据范围
               # color=((0, '#1E90FF'), (2, '#1874CD'), (5, '#3A5FCD'), (10, '#0000CD'), (30, '#9400D3')),
               colors=None,
+              colors_only=None,
               # 字体大小
               font_size=15,
               # 放大区域
@@ -129,9 +130,13 @@ def _make_fig(file_np,
 
     if colors is None:
         np_min, np_max = np.nanpercentile(file_np, [5, 95])
-        break_value = (np_max - np_min) / 4
-        colors = ((np_min, '#1E90FF'), (np_min + break_value, '#1874CD'), (np_min + 2 * break_value, '#3A5FCD'),
-                  (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
+        if colors_only is None:
+            colors_only = ('#1E90FF', '#1874CD', '#3A5FCD', '#0000CD', '#9400D3')
+        break_value = (np_max - np_min) / (len(colors_only) - 1)
+        colors = [(np_min, colors_only[0])]
+        for i in range(1, len(colors_only)):
+            colors.append((np_min + i * break_value, colors_only[i]))
+        colors.append((np_max, colors_only[-1]))
     # 用色带给数据上色,输入单通道,返回三通道图
     data_np, new_colors = _get_color_normalization(file_np, colors)
     cmap = LinearSegmentedColormap.from_list('custom_cmap', new_colors)
