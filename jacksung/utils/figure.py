@@ -128,7 +128,7 @@ def _make_fig(file_np,
     ax = fig.add_subplot(111, projection=proj)
 
     if colors is None:
-        np_max, np_min = np.nanmax(file_np), np.nanmin(file_np)
+        np_max, np_min = np.percentile(file_np, [5, 95])
         break_value = (np_max - np_min) / 4
         colors = ((np_min, '#1E90FF'), (np_min + break_value, '#1874CD'), (np_min + 2 * break_value, '#3A5FCD'),
                   (np_min + 3 * break_value, '#0000CD'), (np_max, '#9400D3'))
