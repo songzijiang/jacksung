@@ -47,7 +47,7 @@ def merge_content(tex_dir, main_tex):
             if not line:
                 break
             if line.startswith(r'\input{') or line.startswith(r'\include{'):
-                sub_tex_path = os.path.join(tex_dir, line.split('{')[1].split('}')[0])
+                sub_tex_path = line.split('{')[1].split('}')[0]
                 if not sub_tex_path.endswith('.tex'):
                     sub_tex_path += r'.tex'
                 result_tex += merge_content(tex_dir, sub_tex_path) + '\n'

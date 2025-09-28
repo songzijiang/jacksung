@@ -258,7 +258,7 @@ class GeoAttX_M(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, fy_npy_path):
+    def predict(self, fy_npy_path, smooth=True):
         try:
             print(f'正在反演:{fy_npy_path}...')
             if not os.path.exists(fy_npy_path):
@@ -272,7 +272,8 @@ class GeoAttX_M(GeoAttX):
             n = norm.norm(n_data, fy_norm=True)[:, :, :, :]
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
-            smooth = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+            if smooth:
+                smooth = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
             n = ups(n)
             n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
             y_ = self.model(n)
@@ -283,7 +284,8 @@ class GeoAttX_M(GeoAttX):
             y[0][y[0] < 0] = 0
             y = rearrange(y[0], '(b h) w -> b h w', b=1)
             _, H, W = y.shape
-            y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
+            if smooth:
+                y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
             return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
