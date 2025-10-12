@@ -42,7 +42,7 @@ def load_model(model, state_dict, strict=True):
 
 def get_stat_dict(metrics):
     stat_dict = {
-        'epochs': 0, 'loss0es': [], 'loss1es': [], 'loss2es': [], 'metrics': {}}
+        'epochs': 0, 'loss': [], 'metrics': {}}
     for idx, metrics in enumerate(metrics):
         name, default_value, op = metrics
         stat_dict['metrics'][name] = {'value': [], 'best': {'value': default_value, 'epoch': 0, 'op': op}}

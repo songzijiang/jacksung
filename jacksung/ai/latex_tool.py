@@ -125,9 +125,9 @@ def polish(main_dir_path, tex_file, server_url, token='Your token here', model_n
         else:
             try:
                 print(rf'当前处理{idx}/{len(result_split)}行,总共用时{st.pinch()},当前时间:{get_time_str()}')
-                print(f'**p**{line[:100]}{"..." if len(line) > 100 else line}***')
+                print(f'Input[{line[:100]}{"..." if len(line) > 100 else line}]')
                 polish_text = ai.call_ai_polish(line, cn_prompt, prompt)
-                print(f'**r**{polish_text[:100]}{"..." if len(polish_text) > 100 else polish_text}***')
+                print(f'Polished:[{polish_text[:100]}{"..." if len(polish_text) > 100 else polish_text}]')
                 print(rf'处理结束，耗时{spend_count.pinch()},共改写{len(line)}个字符')
                 new_tex += polish_text + '\n'
             except Exception as e:
