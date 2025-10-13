@@ -29,47 +29,61 @@ class Metrics:
         self.p = PearsonCorrCoef()
         self.AUROC = AUROC("binary")
 
-    def calc_AUROC(self, preds, target):
+    def mask_nan(self, pred, target):
+        pred = pred.flatten()
+        target = target.flatten()
+        # 生成有效掩码：真实值和预测值均非 NaN 的位置为 True
+        valid_mask = ~(torch.isnan(pred) | torch.isnan(target))
+
+        # 过滤无效元素
+        pred = pred[valid_mask]
+        target = target[valid_mask]
+
+        return pred, target
+
+    def calc_AUROC(self, preds, targets):
         AUROC = 0
         for i in range(len(preds)):
-            AUROC += self.AUROC(preds[i].flatten(), target[i].flatten())
+            pred, target = self.mask_nan(preds[i], targets[i])
+            AUROC += self.AUROC(pred, target)
         self.AUROC.reset()
         return AUROC / len(preds)
 
-    def calc_psnr(self, preds, target):
+    def calc_psnr(self, preds, targets):
         psnr = 0
         for i in range(len(preds)):
             psnr += self.psnr(rearrange(preds[i], '(b c) h w->b c h w', b=1),
-                              rearrange(target[i], '(b c) h w->b c h w', b=1))
+                              rearrange(targets[i], '(b c) h w->b c h w', b=1))
         self.psnr.reset()
         return psnr / len(preds)
 
-    def calc_ssim(self, preds, target):
+    def calc_ssim(self, preds, targets):
         ssim = 0
         for i in range(len(preds)):
             ssim += self.ssim(rearrange(preds[i], '(b c) h w->b c h w', b=1),
-                              rearrange(target[i], '(b c) h w->b c h w', b=1))
+                              rearrange(targets[i], '(b c) h w->b c h w', b=1))
         self.ssim.reset()
         return ssim / len(preds)
 
-    def calc_rmse(self, preds, target):
+    def calc_rmse(self, preds, targets):
         rmse = 0
         for i in range(len(preds)):
-            rmse += compute_rmse(preds[i], target[i])
+            rmse += compute_rmse(preds[i], targets[i])
         return rmse / len(preds)
 
-    def calc_rr(self, preds, target):
+    def calc_rr(self, preds, targets):
         rr = 0
         for i in range(len(preds)):
-            rr += self.rr(preds[i].flatten(), target[i].flatten())
+            pred, tar = self.mask_nan(preds[i], targets[i])
+            rr += self.rr(pred, tar)
         self.rr.reset()
         return rr / len(preds)
 
-    def calc_p(self, preds, target, exclude_zero=False):
+    def calc_p(self, preds, targets, exclude_zero=False):
         p = 0
         count = 0
         for i in range(len(preds)):
-            pred, target = preds[i].flatten(), target[i].flatten()
+            pred, target = self.mask_nan(preds[i], targets[i])
             if exclude_zero:
                 mask = target != 0
                 pred = pred[mask]
@@ -81,17 +95,17 @@ class Metrics:
         self.p.reset()
         return p / count
 
-    def print_metrics(self, preds, target, print_log=True):
-        rr = float(self.calc_rr(preds, target))
-        p = float(self.calc_p(preds, target))
-        rmse = float(self.calc_rmse(preds, target))
-        ssim = float(self.calc_ssim(preds, target))
-        psnr = float(self.calc_psnr(preds, target))
+    def print_metrics(self, preds, targets, print_log=True):
+        rr = float(self.calc_rr(preds, targets))
+        p = float(self.calc_p(preds, targets))
+        rmse = float(self.calc_rmse(preds, targets))
+        ssim = float(self.calc_ssim(preds, targets))
+        psnr = float(self.calc_psnr(preds, targets))
         if print_log:
             print(rf'p: {p} rr: {rr} rmse: {rmse} ssim: {ssim} psnr: {psnr}')
         return {'p': p, 'rr': rr, 'rmse': rmse, 'ssim': ssim, 'psnr': psnr}
 
-    def calculate_rain_metrics(self, preds, target, threshold=0.1):
+    def calculate_rain_metrics(self, preds, targets, threshold=0.1):
         """
         使用flatten()批量计算多张降雨图的POD、FAR、ACC、CSI指标
 
@@ -105,17 +119,17 @@ class Metrics:
         """
         # 1. 将每个样本的空间维度展平（[样本数, 高度, 宽度] → [样本数, 像素总数]）
         preds_flat = preds.flatten(start_dim=1)  # 从第1维开始展平（保留样本维度）
-        target_flat = target.flatten(start_dim=1)
+        targets_flat = targets.flatten(start_dim=1)
 
         # 2. 二值化（1=有雨，0=无雨）
         preds_binary = (preds_flat >= threshold).float()
-        target_binary = (target_flat >= threshold).float()
+        targets_binary = (targets_flat >= threshold).float()
 
         # 3. 计算混淆矩阵元素（按样本维度求和）
-        TP = torch.sum(preds_binary * target_binary, dim=1)  # 每个样本的TP总和
-        FP = torch.sum(preds_binary * (1 - target_binary), dim=1)
-        TN = torch.sum((1 - preds_binary) * (1 - target_binary), dim=1)
-        FN = torch.sum((1 - preds_binary) * target_binary, dim=1)
+        TP = torch.sum(preds_binary * targets_binary, dim=1)  # 每个样本的TP总和
+        FP = torch.sum(preds_binary * (1 - targets_binary), dim=1)
+        TN = torch.sum((1 - preds_binary) * (1 - targets_binary), dim=1)
+        FN = torch.sum((1 - preds_binary) * targets_binary, dim=1)
 
         # 4. 计算指标（处理分母为0的情况）
         POD = TP / (TP + FN)
@@ -156,8 +170,9 @@ if __name__ == '__main__':
                             ],
                            [[0, 1, 1],
                             [0, 1, 1],
-                            [0, 1, 1]
+                            [0, 0, 1]
                             ]])
+    target[1, 0, 2] = torch.nan
     # m = Metrics()
     # print(m.calc_rr(preds, target))
     m = Metrics()
