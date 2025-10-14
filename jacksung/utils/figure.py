@@ -188,14 +188,10 @@ def _make_fig(file_np,
     np_sum_w = np.nonzero(np_data.sum(axis=(0, 2)))[0]
     # print(np_sum_h, np_sum_w)
     h, w = np_data.shape[:2]
-    if clip_left is not None:
-        clip_left = min(np_sum_w[0], clip_left)
-    if clip_right is not None:
-        clip_right = max(np_sum_w[-1], w - clip_right)
-    if clip_top is not None:
-        clip_top = min(np_sum_h[0], clip_top)
-    if clip_bottom is not None:
-        clip_bottom = max(np_sum_h[-1], h - clip_bottom)
+    clip_left = min(np_sum_w[0], clip_left) if clip_left is not None else np_sum_w[0]
+    clip_right = max(np_sum_w[-1], w - clip_right) if clip_right is not None else np_sum_w[-1]
+    clip_top = min(np_sum_h[0], clip_top) if clip_top is not None else np_sum_h[0]
+    clip_bottom = max(np_sum_h[-1], h - clip_bottom) if clip_bottom is not None else np_sum_h[-1]
     crop_png(save_name, left=clip_left, top=clip_top, right=clip_right, bottom=clip_bottom)
     plt.close()
     if make_fig_lock is not None:
