@@ -198,6 +198,7 @@ def make_fig(data,
                      cfeature.NaturalEarthFeature('physical', 'land', '50m', edgecolor='black', facecolor='none',
                                                   linewidth=0.4), cfeature.OCEAN, cfeature.LAND, cfeature.RIVERS),
              border_type=None,
+             draw_colormap=True,
              colormap_l_margin=300,
              colormap_r_margin=200,
              cm_font_size=150,
@@ -206,13 +207,14 @@ def make_fig(data,
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
                        features=features, border_type=border_type, xy_axis=xy_axis,
                        file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only)
-    img = cv2.imread(save_name)
-    h, w, c = img.shape
-    cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin,
-                        font_size=cm_font_size, round_digits=round_digits)
-    white_block = make_block(10, w)
-    merge_img = concatenate_images([img, white_block, cm], direction='v')
-    cv2.imwrite(save_name, merge_img)
+    if draw_colormap:
+        img = cv2.imread(save_name)
+        h, w, c = img.shape
+        cm = make_color_map(colors, 180, w, unit=colormap_unit, l_margin=colormap_l_margin, r_margin=colormap_r_margin,
+                            font_size=cm_font_size, round_digits=round_digits)
+        white_block = make_block(10, w)
+        merge_img = concatenate_images([img, white_block, cm], direction='v')
+        cv2.imwrite(save_name, merge_img)
     return colors
 
 
