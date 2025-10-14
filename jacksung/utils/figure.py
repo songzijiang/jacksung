@@ -106,6 +106,10 @@ def _make_fig(file_np,
               # 图片清晰度
               dpi=500,
               xy_axis=None,
+              draw_x_label=True,
+              draw_y_label=True,
+              draw_lon_grid=True,
+              draw_lat_grid=True,
               # 添加各种特征
               # 自然海岸界,其他自带要素的参考cartopy
               # '10m', '50m', or '110m'
@@ -153,13 +157,17 @@ def _make_fig(file_np,
         ax.gridlines(line_style=border_type)
     # 设置大刻度和小刻度
     tick_proj = ccrs.PlateCarree()
-    ax.set_xticks(np.arange(xy_axis[0][0], xy_axis[0][1] + 1, xy_axis[0][2]), crs=tick_proj)
+    if draw_x_label:
+        ax.set_xticks(np.arange(xy_axis[0][0], xy_axis[0][1] + 1, xy_axis[0][2]), crs=tick_proj)
     # ax.set_xticks(np.arange(-180, 180 + 30, 30), minor=True, crs=tick_proj)
-    ax.set_yticks(np.arange(xy_axis[1][0], xy_axis[1][1] + 1, xy_axis[1][2]), crs=tick_proj)
+    if draw_y_label:
+        ax.set_yticks(np.arange(xy_axis[1][0], xy_axis[1][1] + 1, xy_axis[1][2]), crs=tick_proj)
     # ax.set_yticks(np.arange(-90, 90 + 15, 15), minor=True, crs=tick_proj)
     # 利用Formatter格式化刻度标签
-    ax.xaxis.set_major_formatter(LongitudeFormatter())
-    ax.yaxis.set_major_formatter(LatitudeFormatter())
+    if draw_lon_grid:
+        ax.xaxis.set_major_formatter(LongitudeFormatter())
+    if draw_lat_grid:
+        ax.yaxis.set_major_formatter(LatitudeFormatter())
     ax.set_title(file_title, fontsize=font_size)
     plt.xticks(fontsize=font_size)
     plt.yticks(fontsize=font_size)
@@ -186,6 +194,10 @@ def _make_fig(file_np,
 def make_fig(data,
              area,
              xy_axis=None,
+             draw_x_label=True,
+             draw_y_label=True,
+             draw_lon_grid=True,
+             draw_lat_grid=True,
              file_title='',
              save_name='figure_default.png',
              colors=None,
@@ -205,7 +217,8 @@ def make_fig(data,
              round_digits=1,
              colormap_unit=''):
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
-                       features=features, border_type=border_type, xy_axis=xy_axis,
+                       features=features, border_type=border_type, xy_axis=xy_axis, draw_x_label=draw_x_label,
+                       draw_y_label=draw_y_label, draw_lon_grid=draw_lon_grid, draw_lat_grid=draw_lat_grid,
                        file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only)
     if draw_colormap:
         img = cv2.imread(save_name)
