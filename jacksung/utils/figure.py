@@ -110,6 +110,10 @@ def _make_fig(file_np,
               draw_y_label=True,
               draw_lon_grid=True,
               draw_lat_grid=True,
+              clip_left=None,
+              clip_right=None,
+              clip_top=None,
+              clip_bottom=None,
               # 添加各种特征
               # 自然海岸界,其他自带要素的参考cartopy
               # '10m', '50m', or '110m'
@@ -183,7 +187,16 @@ def _make_fig(file_np,
     np_sum_h = np.nonzero(np_data.sum(axis=(1, 2)))[0]
     np_sum_w = np.nonzero(np_data.sum(axis=(0, 2)))[0]
     # print(np_sum_h, np_sum_w)
-    crop_png(save_name, left=min(np_sum_w[0], 400), top=min(np_sum_h[0], 150), right=np_sum_w[-1], bottom=np_sum_h[-1])
+    h, w = np_data.shape[:2]
+    if clip_left is not None:
+        clip_left = min(np_sum_w[0], clip_left)
+    if clip_right is not None:
+        clip_right = max(np_sum_w[-1], w - clip_right)
+    if clip_top is not None:
+        clip_top = min(np_sum_h[0], clip_top)
+    if clip_bottom is not None:
+        clip_bottom = max(np_sum_h[-1], h - clip_bottom)
+    crop_png(save_name, left=clip_left, top=clip_top, right=clip_right, bottom=clip_bottom)
     plt.close()
     if make_fig_lock is not None:
         make_fig_lock.release()
@@ -198,6 +211,10 @@ def make_fig(data,
              draw_y_label=True,
              draw_lon_grid=True,
              draw_lat_grid=True,
+             clip_left=400,
+             clip_right=None,
+             clip_top=150,
+             clip_bottom=None,
              file_title='',
              save_name='figure_default.png',
              colors=None,
@@ -219,7 +236,8 @@ def make_fig(data,
     colors = _make_fig(data, font_size=font_size, zoom_rectangle=zoom_rectangle, zoom_docker=zoom_docker, dpi=dpi,
                        features=features, border_type=border_type, xy_axis=xy_axis, draw_x_label=draw_x_label,
                        draw_y_label=draw_y_label, draw_lon_grid=draw_lon_grid, draw_lat_grid=draw_lat_grid,
-                       file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only)
+                       file_title=file_title, save_name=save_name, area=area, colors=colors, colors_only=colors_only,
+                       clip_left=clip_left, clip_right=clip_right, clip_top=clip_top, clip_bottom=clip_bottom)
     if draw_colormap:
         img = cv2.imread(save_name)
         h, w, c = img.shape
