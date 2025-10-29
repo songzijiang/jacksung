@@ -7,6 +7,7 @@ from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
 from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, PremNormalization
 import numpy as np
 from jacksung.utils.data_convert import np2tif
+from jacksung.utils.cache import Cache
 from jacksung.ai.utils.fy import prase_filename, getFY_coord_clip, getNPfromHDFClip
 from einops import rearrange
 from jacksung.ai.utils.util import parse_config, data_to_device
@@ -85,6 +86,7 @@ class GeoAttX_I(GeoAttX):
         self.norm = PredNormalization(self.args.pred_data_path)
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
+        self.cache = Cache(10)
 
     def save(self, file_name, ys):
         file_info = prase_filename(file_name)
@@ -137,8 +139,11 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path, area=self.area)
-        if f_data is not None:
+        f_data = self.cache.get_key_in_cache(f_path)
+        if f_data is None:
+            f_data = getNPfromHDFClip(self.ld, f_path, area=self.area)
+            self.cache.add_key(f_path, 'None' if f_data is None else f_data)
+        if f_data != 'None':
             f_data = f_data[2:, :, :]
         else:
             raise NanNPException(f_path)
