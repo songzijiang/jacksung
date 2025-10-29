@@ -31,7 +31,7 @@ def _get_np_array(fy_npy):
 
 
 class GeoAttX:
-    def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10))):
+    def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10)), lock=None):
         self.root_path = None
         self.timestamp = None
         self.dir_name = None
@@ -39,6 +39,7 @@ class GeoAttX:
         self.task_type = task_type
         self.set_root_path(root_path)
         self.area = area
+        self.lock = lock
 
     def get_root_path(self):
         return self.root_path
@@ -139,7 +140,7 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path, area=self.area, cache=self.cache)
+        f_data = getNPfromHDFClip(self.ld, f_path, area=self.area, cache=self.cache, lock=self.lock)
         if type(f_data) is not str:
             f_data = f_data[2:, :, :]
         else:
