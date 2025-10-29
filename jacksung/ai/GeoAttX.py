@@ -16,6 +16,18 @@ from jacksung.utils.exception import NoFileException, NanNPException
 import torch.nn as nn
 
 
+def _get_np_array(fy_npy):
+    if fy_npy is str:
+        print(f'正在反演:{fy_npy}...')
+        if not os.path.exists(fy_npy):
+            raise NoFileException(fy_npy)
+        n_data = np.load(fy_npy)
+    elif fy_npy is np.array:
+        n_data = fy_npy
+    else:
+        raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
+    return n_data
+
 class GeoAttX:
     def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10))):
         self.root_path = None
@@ -219,12 +231,9 @@ class GeoAttX_P(GeoAttX):
                 f.write(f'QPE 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, fy_npy_path):
+    def predict(self, fy_npy):
         try:
-            print(f'正在反演:{fy_npy_path}...')
-            if not os.path.exists(fy_npy_path):
-                raise NoFileException(fy_npy_path)
-            n_data = np.load(fy_npy_path)
+            n_data=_get_np_array(fy_npy)
             n_data = torch.from_numpy(n_data)
             norm = PrecNormalization(self.args.prec_data_path)
             norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
@@ -258,13 +267,9 @@ class GeoAttX_M(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, fy_npy_path, smooth=True):
+    def predict(self, fy_npy, smooth=True):
         try:
-            print(f'正在反演:{fy_npy_path}...')
-            if not os.path.exists(fy_npy_path):
-                raise NoFileException(fy_npy_path)
-            n_data = np.load(fy_npy_path)
-            n_data = torch.from_numpy(n_data)
+            n_data=_get_np_array(fy_npy)
             norm = PremNormalization(self.args.prec_data_path)
             norm.mean, norm.std = data_to_device([norm.mean, norm.std], self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
