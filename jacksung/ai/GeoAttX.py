@@ -89,6 +89,12 @@ class GeoAttX_I(GeoAttX):
         self.ld = None
         self.cache = Cache(cache_size)
 
+    def set_device(self, device):
+        self.device = device
+        self.x1.to(self.device)
+        self.x4.to(self.device)
+        self.x12.to(self.device)
+
     def save(self, file_name, ys):
         file_info = prase_filename(file_name)
         ld = int(file_info["position"])
@@ -230,6 +236,10 @@ class GeoAttX_P(GeoAttX):
         super().__init__(config=config, root_path=root_path, task_type='prec', area=area)
         self.model = self.load_model(model_path)
 
+    def set_device(self, device):
+        self.device = device
+        self.model.to(device)
+
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['qpe']}])
@@ -266,6 +276,10 @@ class GeoAttX_M(GeoAttX):
     def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10))):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
         self.model = self.load_model(model_path, version=2)
+
+    def set_device(self, device):
+        self.device = device
+        self.model.to(device)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
