@@ -24,6 +24,7 @@ from jacksung.utils.multi_task import MultiTasks, type_process
 import cv2
 
 reference_cache = Cache(10)
+
 x_range = {'left': -60, 'top': 60, 'bottom': -60, 'right': 60, 'width': 2400, 'height': 2400}
 min_x_range = {'left': -60, 'top': 60, 'bottom': -60, 'right': 60, 'width': 480, 'height': 480}
 static_params = {4000: {'l': 2747, 'c': 2747, 'COFF': 1373.5, 'CFAC': 10233137, 'LOFF': 1373.5, 'LFAC': 10233137},
@@ -116,16 +117,26 @@ def get_reference(ld):
     return spatial_reference, gcps_list
 
 
-def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140, 10), (20, 60, 10))):
+def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140, 10), (20, 60, 10)), cache=None):
     lon_d = int((ld - (area[0][0] + area[0][1]) / 2) * 20)
     lat_d = int(((area[1][0] + area[1][1]) / 2) * 20)
-    np_data = getNPfromHDF(file_path, file_type, lock)
+    np_data = getNPfromHDF(file_path, file_type, lock, cache=cache)
     np_data = np_data[:, 800 - lat_d:1600 - lat_d, 800 - lon_d:1600 - lon_d]
-    print(800 - lat_d, 1600 - lat_d, 800 - lon_d, 1600 - lon_d)
     return np_data
 
 
-def getNPfromHDF(hdf_path, file_type='FDI', lock=None):
+def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None):
+    if cache is not None:
+        n_data = cache.get_key_in_cache(hdf_path + file_type)
+        if n_data != 'None':
+            n_data = _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
+            cache.add_key(hdf_path + file_type, 'None' if n_data is None else n_data)
+        return n_data
+    else:
+        return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
+
+
+def _getNPfromHDF(hdf_path, file_type='FDI', lock=None):
     file_name = hdf_path.split(os.sep)[-1]
     file_info = prase_filename(file_name)
     if lock:
