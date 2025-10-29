@@ -17,7 +17,7 @@ import torch.nn as nn
 
 
 def _get_np_array(fy_npy):
-    if fy_npy is str:
+    if type(fy_npy) is str:
         print(f'正在反演:{fy_npy}...')
         if not os.path.exists(fy_npy):
             raise NoFileException(fy_npy)
@@ -27,6 +27,7 @@ def _get_np_array(fy_npy):
     else:
         raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
     return n_data
+
 
 class GeoAttX:
     def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10))):
@@ -233,7 +234,7 @@ class GeoAttX_P(GeoAttX):
 
     def predict(self, fy_npy):
         try:
-            n_data=_get_np_array(fy_npy)
+            n_data = _get_np_array(fy_npy)
             n_data = torch.from_numpy(n_data)
             norm = PrecNormalization(self.args.prec_data_path)
             norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
@@ -269,7 +270,8 @@ class GeoAttX_M(GeoAttX):
 
     def predict(self, fy_npy, smooth=True):
         try:
-            n_data=_get_np_array(fy_npy)
+            n_data = _get_np_array(fy_npy)
+            n_data = torch.from_numpy(n_data)
             norm = PremNormalization(self.args.prec_data_path)
             norm.mean, norm.std = data_to_device([norm.mean, norm.std], self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
