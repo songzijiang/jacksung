@@ -86,7 +86,7 @@ class GeoAttX_I(GeoAttX):
         self.norm = PredNormalization(self.args.pred_data_path)
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
-        self.cache = Cache(10)
+        self.cache = Cache(20)
 
     def save(self, file_name, ys):
         file_info = prase_filename(file_name)
