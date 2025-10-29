@@ -22,7 +22,7 @@ def _get_np_array(fy_npy):
         if not os.path.exists(fy_npy):
             raise NoFileException(fy_npy)
         n_data = np.load(fy_npy)
-    elif fy_npy is np.array:
+    elif type(fy_npy) is np.ndarray:
         n_data = fy_npy
     else:
         raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
