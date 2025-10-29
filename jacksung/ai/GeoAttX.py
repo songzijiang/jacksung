@@ -143,7 +143,7 @@ class GeoAttX_I(GeoAttX):
         if f_data is None:
             f_data = getNPfromHDFClip(self.ld, f_path, area=self.area)
             self.cache.add_key(f_path, 'None' if f_data is None else f_data)
-        if f_data != 'None':
+        if type(f_data) is not str:
             f_data = f_data[2:, :, :]
         else:
             raise NanNPException(f_path)
