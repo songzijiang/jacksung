@@ -141,7 +141,6 @@ class GeoAttX_I(GeoAttX):
             raise NoFileException(f_path)
         f_data = self.cache.get_key_in_cache(f_path)
         if f_data is None:
-            print('read NP from hdf')
             f_data = getNPfromHDFClip(self.ld, f_path, area=self.area)
             self.cache.add_key(f_path, 'None' if f_data is None else f_data)
         if type(f_data) is not str:
