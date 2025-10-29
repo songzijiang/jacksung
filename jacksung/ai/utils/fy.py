@@ -128,7 +128,7 @@ def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140,
 def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None):
     if cache is not None:
         n_data = cache.get_key_in_cache(hdf_path + file_type)
-        if n_data != 'None':
+        if type(n_data) is not str:
             n_data = _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
             cache.add_key(hdf_path + file_type, 'None' if n_data is None else n_data)
         return n_data
