@@ -156,14 +156,15 @@ class GeoAttX_I(GeoAttX):
         t_data = t_data * self.mean_std2Tensor(std, h, w) + self.mean_std2Tensor(mean, h, w)
         return t_data
 
-    def predict(self, file_name, step=360, p_steps=(48, 12, 4, 1)):
+    def predict(self, file_name, step=360, p_steps=(48, 12, 4, 1), print_log=True):
         try:
             file_info = prase_filename(file_name)
             self.ld = int(file_info["position"])
             step = step // 15
             # if step > 24:
             #     step = 24
-            print(f'当前时刻:{file_info["start"]}\n预测长度:{step * 15}分钟')
+            if print_log:
+                print(f'当前时刻:{file_info["start"]}\n预测长度:{step * 15}分钟')
             task_progress = []
             p_steps = sorted(p_steps, reverse=True)
             while step > 0:
@@ -173,7 +174,8 @@ class GeoAttX_I(GeoAttX):
                         step -= p_step
                         break
             task_progress.reverse()
-            print(f'正在预测:{file_info["start"] + timedelta(minutes=sum(task_progress) * 15)}...')
+            if print_log:
+                print(f'正在预测:{file_info["start"] + timedelta(minutes=sum(task_progress) * 15)}...')
             n = self.get_exist_by_filename_and_mins(file_name, 0)
             now_date = file_info["start"]
             porcess_list = {now_date: n.detach().cpu().numpy()[0]}
@@ -183,7 +185,8 @@ class GeoAttX_I(GeoAttX):
             for step in task_progress:
                 pre_date = now_date - timedelta(minutes=15 * step)
                 now_date += timedelta(minutes=15 * step)
-                print(f'predicting {now_date}...')
+                if print_log:
+                    print(f'正在预测 {now_date}...')
                 if pre_date in porcess_list:
                     f = porcess_list[pre_date]
                     f = self.numpy2tensor(f)
@@ -193,7 +196,8 @@ class GeoAttX_I(GeoAttX):
                 f = self.norm.norm(f)
                 st = Stopwatch()
                 y_ = eval(f'self.x{step}(f, n)')
-                print(f'预测耗时: {st.reset()} 秒')
+                if print_log:
+                    print(f'预测耗时: {st.reset()} 秒')
                 # mean and std再标准化
                 y_mean = torch.mean(y_, dim=(2, 3))
                 y_std = torch.std(y_, dim=(2, 3))
@@ -223,10 +227,11 @@ class GeoAttX_P(GeoAttX):
         super().__init__(config=config, root_path=root_path, task_type='prec', area=area)
         self.model = self.load_model(model_path)
 
-    def save(self, y, save_name, info_log=True):
+    def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['qpe']}])
-        print(f'data saved in {self.root_path}')
+        if print_log:
+            print(f'data saved in {self.root_path}')
         if info_log:
             with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
                 f.write(f'QPE 反演：{save_name}\n')
@@ -259,10 +264,11 @@ class GeoAttX_M(GeoAttX):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
         self.model = self.load_model(model_path, version=2)
 
-    def save(self, y, save_name, info_log=True):
+    def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['imerg']}])
-        print(f'data saved in {self.root_path}')
+        if print_log:
+            print(f'data saved in {self.root_path}')
         if info_log:
             with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
                 f.write(f'Imerg 反演：{save_name}\n')
