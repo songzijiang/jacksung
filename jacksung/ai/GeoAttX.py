@@ -76,8 +76,8 @@ class GeoAttX:
 
 class GeoAttX_I(GeoAttX):
     def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
-                 area=((100, 140, 10), (20, 60, 10)), cache_size=1):
-        super().__init__(config=config, root_path=root_path, task_type='pred', area=area)
+                 area=((100, 140, 10), (20, 60, 10)), cache_size=1, lock=None):
+        super().__init__(config=config, root_path=root_path, task_type='pred', area=area, lock=lock)
         self.f, self.n, self.ys = None, None, None
         self.data_path = data_path
         self.x1 = self.load_model(x1_path)
