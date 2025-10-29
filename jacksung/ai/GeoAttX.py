@@ -75,7 +75,7 @@ class GeoAttX:
 
 class GeoAttX_I(GeoAttX):
     def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
-                 area=((100, 140, 10), (20, 60, 10))):
+                 area=((100, 140, 10), (20, 60, 10)), cache_size=1):
         super().__init__(config=config, root_path=root_path, task_type='pred', area=area)
         self.f, self.n, self.ys = None, None, None
         self.data_path = data_path
@@ -86,7 +86,7 @@ class GeoAttX_I(GeoAttX):
         self.norm = PredNormalization(self.args.pred_data_path)
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
-        self.cache = Cache(20)
+        self.cache = Cache(cache_size)
 
     def save(self, file_name, ys):
         file_info = prase_filename(file_name)
