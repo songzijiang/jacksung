@@ -76,8 +76,10 @@ class GeoAttX:
 
 class GeoAttX_I(GeoAttX):
     def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
-                 area=((100, 140, 10), (20, 60, 10)), cache_size=1, lock=None):
+                 area=((100, 140, 10), (20, 60, 10)), cache_size=1, lock=None, device=None):
         super().__init__(config=config, root_path=root_path, task_type='pred', area=area, lock=lock)
+        if device is not None:
+            self.device = device
         self.f, self.n, self.ys = None, None, None
         self.data_path = data_path
         self.x1 = self.load_model(x1_path)
@@ -88,12 +90,6 @@ class GeoAttX_I(GeoAttX):
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
         self.cache = Cache(cache_size)
-
-    def set_device(self, device):
-        self.device = device
-        self.x1.to(self.device)
-        self.x4.to(self.device)
-        self.x12.to(self.device)
 
     def save(self, file_name, ys):
         file_info = prase_filename(file_name)
@@ -232,13 +228,12 @@ class GeoAttX_I(GeoAttX):
 
 
 class GeoAttX_P(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_qpe.yml', area=((100, 140, 10), (20, 60, 10))):
+    def __init__(self, model_path, root_path=None, config='predict_qpe.yml', area=((100, 140, 10), (20, 60, 10)),
+                 device=None):
         super().__init__(config=config, root_path=root_path, task_type='prec', area=area)
+        if device is not None:
+            self.device = device
         self.model = self.load_model(model_path)
-
-    def set_device(self, device):
-        self.device = device
-        self.model.to(device)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
@@ -273,13 +268,12 @@ class GeoAttX_P(GeoAttX):
 
 
 class GeoAttX_M(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10))):
+    def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10)),
+                 device=None):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
+        if device is not None:
+            self.device = device
         self.model = self.load_model(model_path, version=2)
-
-    def set_device(self, device):
-        self.device = device
-        self.model.to(device)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
