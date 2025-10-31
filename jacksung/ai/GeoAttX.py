@@ -285,7 +285,7 @@ class GeoAttX_M(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, fy_npy, smooth=True):
+    def predict(self, fy_npy, smooth=True, up=True):
         try:
             n_data = _get_np_array(fy_npy)
             n_data = torch.from_numpy(n_data)
@@ -300,9 +300,12 @@ class GeoAttX_M(GeoAttX):
                 smooth = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
             n = ups(n)
             n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
+            if not up:
+                n = n.mean(dim=0, keepdim=True)
             y_ = self.model(n)
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', dsize=4)
-            y_ = ps(y_)
+            if not up:
+                y_ = ps(y_)
             y = norm.denorm(y_, fy_norm=False)[0]
             y[0][y[1] > y[2]] = 0
             y[0][y[0] < 0] = 0
