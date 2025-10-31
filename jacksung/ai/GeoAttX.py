@@ -303,7 +303,7 @@ class GeoAttX_M(GeoAttX):
             if not up:
                 n = n.mean(dim=0, keepdim=True)
             y_ = self.model(n)
-            y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', dsize=4)
+            y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
             if not up:
                 y_ = ps(y_)
             y = norm.denorm(y_, fy_norm=False)[0]
