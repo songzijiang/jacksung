@@ -82,6 +82,7 @@ class PremNormalization:
         if fy_norm:
             data = data * self.std[:7] + self.mean[:7]
         else:
+            print(data.shape,self.std[7:].shape)
             data = data * self.std[7:] + self.mean[7:]
             # data[:, 0][data[:, 0] == 0] = torch.inf
             # data[:, 0] = 1 / (data[:, 0].clone() ** 2)
