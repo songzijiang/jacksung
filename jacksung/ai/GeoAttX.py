@@ -313,6 +313,8 @@ class GeoAttX_M(GeoAttX):
             _, H, W = y.shape
             if smooth:
                 y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
+            # 生成的结果为mm/hhr， 转为15分钟累计降水（mm）
+            y /= 2
             return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
