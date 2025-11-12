@@ -1,3 +1,5 @@
+import random
+
 import cv2
 from PIL import Image, ImageFont, ImageDraw
 import numpy as np
@@ -19,6 +21,26 @@ def get_pixel_by_coord(img, coord, x, y):
 
 
 def draw_text(img, xy, font=None, font_size=35, text='test text', color=(0, 0, 0)):
+    if xy[0] < 0 or xy[1] < 0:
+        xy_txt = (0 if xy[0] < 0 else xy[0], 0 if xy[1] < 0 else xy[1])
+        h, w, c = img.shape
+        white_block = make_block(h, w, color=(255, 255, 255))
+        txt_block = _draw_text(white_block, xy_txt, font, font_size, text, color)
+        non_white_mask = np.any(txt_block != [255, 255, 255], axis=-1)
+        row_indices, col_indices = np.where(non_white_mask)
+        # 3. 计算最大/最小索引
+        min_row, max_row = row_indices.min(), row_indices.max()
+        min_col, max_col = col_indices.min(), col_indices.max()
+        txt_length = max_col - min_col
+        txt_width = max_row - min_row
+        if xy[0] < 0:
+            xy = ((w - txt_length) // 2, xy[1])
+        if xy[1] < 0:
+            xy = (xy[0], (h - txt_width) // 2)
+    return _draw_text(img, xy, font, font_size, text, color)
+
+
+def _draw_text(img, xy, font=None, font_size=35, text='test text', color=(0, 0, 0)):
     if font is None:
         try:
             with resources.path("jacksung.libs", "times.ttf") as font_path:
@@ -191,5 +213,9 @@ def zoomAndDock(img, zoom_rectangle, docker, scale_factor=2, border=10):
 
 
 if __name__ == '__main__':
-    path = r'D:\python_Project\FYpredict\metrics\make_figure\band_metrics.png'
-    crop_png(path, right_margin=50)
+    # path = r'D:\python_Project\FYpredict\metrics\make_figure\band_metrics.png'
+    # crop_png(path, right_margin=50)
+    white = make_block(200, 500, color=(random.randint(0, 255), 255, 255))
+    white = draw_text(white, (-1, 10), text='testtesttesttesttesttest text')
+    cv2.imshow('white', white)
+    cv2.waitKey()
