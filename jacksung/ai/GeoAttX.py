@@ -267,7 +267,7 @@ class GeoAttX_P(GeoAttX):
             return None
 
 
-class GeoAttX_M(GeoAttX):
+class Huayu(GeoAttX):
     def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10)),
                  device=None):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
