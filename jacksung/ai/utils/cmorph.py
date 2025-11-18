@@ -4,7 +4,7 @@ from einops import rearrange, repeat
 from jacksung.utils.data_convert import np2tif, get_transform_from_lonlat_matrices
 
 
-def getNPfromHDF(hdf_path, lock=None, save_file=True,print_log=False):
+def getNPfromHDF(hdf_path, lock=None, save_file=True, print_log=False):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
@@ -30,3 +30,13 @@ def getNPfromHDF(hdf_path, lock=None, save_file=True,print_log=False):
     if save_file:
         np2tif(np_data, save_path='np2tif_dir', out_name='CMORPH', dtype='float32', transform=transform)
     return np_data, transform
+
+
+if __name__ == '__main__':
+    data = getNPfromHDF(rf'C:\Users\ECNU\PycharmProjects\CMORPH_V1.0_ADJ_8km-30min_2022070203.nc')
+    # from datetime import datetime
+    #
+    # da = datetime.utcfromtimestamp(1656730800)
+    # print(da)
+    # da = datetime.utcfromtimestamp(1656732600)
+    # print(da)
