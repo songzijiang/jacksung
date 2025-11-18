@@ -4,7 +4,7 @@ from einops import rearrange, repeat
 from jacksung.utils.data_convert import np2tif, get_transform_from_lonlat_matrices
 
 
-def getNPfromHDF(hdf_path, lock=None, save_file=True):
+def getNPfromHDF(hdf_path, lock=None, save_file=True,print_log=False):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
@@ -24,7 +24,8 @@ def getNPfromHDF(hdf_path, lock=None, save_file=True):
     transform, avg_error = get_transform_from_lonlat_matrices(
         lon_array=lon_array,
         lat_array=lat_array,
-        gcp_density=20  # 范围越大，gcp_density建议越大
+        gcp_density=20,  # 范围越大，gcp_density建议越大
+        print_log=print_log
     )
     if save_file:
         np2tif(np_data, save_path='np2tif_dir', out_name='CMORPH', dtype='float32', transform=transform)

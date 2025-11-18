@@ -170,6 +170,7 @@ def get_transform_from_lonlat_matrices(
         lon_array: np.ndarray,
         lat_array: np.ndarray,
         gcp_density: int = 10,
+        print_log=False,
         crs: str = "EPSG:4326"
 ) -> Tuple[rasterio.Affine, float]:
     """
@@ -227,8 +228,9 @@ def get_transform_from_lonlat_matrices(
 
     avg_error_km = np.mean(errors_km)
     max_error_km = np.max(errors_km)
-    print(f"拟合完成：平均误差={avg_error_km:.3f}km，最大误差={max_error_km:.3f}km")
-    print(f"提示：若误差过大（>0.5km），请增大gcp_density（当前={gcp_density}）")
+    if print_log:
+        print(f"拟合完成：平均误差={avg_error_km:.3f}km，最大误差={max_error_km:.3f}km")
+        print(f"提示：若误差过大（>0.5km），请增大gcp_density（当前={gcp_density}）")
 
     return transform, avg_error_km
 
