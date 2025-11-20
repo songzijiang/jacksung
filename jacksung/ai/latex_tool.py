@@ -4,7 +4,7 @@ from tqdm import tqdm
 from jacksung.utils.time import Stopwatch, get_time_str
 
 
-def get_en_polish_prompt(text):
+def get_en_polish_prompt(text, prompt_type='polish'):
     polish_prompt = \
         fr'''
         # Rewrite the text in an academic writing style, using more appropriate vocabulary and sentence structure while keeping the original meaning unchanged:
@@ -18,10 +18,26 @@ def get_en_polish_prompt(text):
         The following is the input content:
         {text}
         '''
-    return polish_prompt
+    check_prompt = \
+        fr'''
+        # Correct grammatical errors and misspelled words in the input text while preserving the original meaning and format:
+        - Ensure the corrected version maintains the exact same information and intent as the original text
+        - Output only the corrected text directly without any additional content
+        - Preserve all mathematical formulas, symbols, and special formatting exactly as input
+        - Maintain the original document structure and formatting commands
+        - Only modify actual grammatical errors and misspelled words
+        - If the input contains LaTeX code, preserve it exactly and only correct text outside code blocks
+        - Do not alter technical terms, proper nouns, or specialized vocabulary
+        - If no errors are detected, output the original text unchanged
+        - Do not include any explanations, comments, or thinking process in the output
+
+        Input text:
+        {text}
+        '''
+    return polish_prompt if prompt_type == 'polish' else check_prompt
 
 
-def get_cn_polish_prompt(text):
+def get_cn_polish_prompt(text, prompt_type='polish'):
     polish_prompt = \
         fr'''
         # 用学术写作风格重写下面的文本,在保持原本涵义不变的情况下使用更合适的词汇和句子结构:
@@ -36,7 +52,21 @@ def get_cn_polish_prompt(text):
         以下为输入内容:
         {text}
         '''
-    return polish_prompt
+    check_prompt = \
+        fr'''
+        # 修正输入文本中的语法错误和单词拼写错误，同时保持原意和格式不变：
+        - 确保修正后的文本与原文的信息和意图完全相同
+        - 请直接输出修正后的文本，不需要包含原文、思考逻辑、注释、解释说明等其他内容
+        - 不需要输出任何输入内容中不存在的控制命令（如\documentclass、\begin、\end等），只需要使用latex格式输出数学公式、符号、引用或者输入内容中所包含的其他latex指令
+        - 注意特殊符号和公式以latex格式输出，而不是直接输出特殊字符
+        - 仅在输入内容中包含\par类似的控制性代码时，在输出内容对应位置需要添加该代码
+        - 如果输入内容仅包含代码，不包含任何实质性的文本内容，则直接将输入内容不做任何改动输出。注意不要遗漏括号等符号
+        - 确保输出内容在原文档中替换输入内容后能够正常编译通过
+        - 重要：你需要确定输入内容所使用的语言，然后使用相同语言进行输出，以保证输入和输出语言一致
+        以下为输入内容:
+        {text}
+        '''
+    return polish_prompt if prompt_type == 'polish' else check_prompt
 
 
 def merge_content(tex_dir, main_tex):
@@ -57,17 +87,18 @@ def merge_content(tex_dir, main_tex):
 
 
 class AI:
-    def __init__(self, token, base_url, model_name='deepseek-r1:70b'):
+    def __init__(self, token, base_url, model_name='deepseek-r1:70b', prompt_type='polish'):
         self.client = OpenAI(api_key=token, base_url=base_url)
         self.model_name = model_name
+        self.prompt_type = prompt_type
 
     def call_ai_polish(self, text, cn_prompt=False, prompt=None):
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=[
                 {"role": "user",
-                 "content": ((get_cn_polish_prompt(text) if cn_prompt else get_en_polish_prompt(
-                     text)) if prompt is None else prompt.replace('{content}', text))}
+                 "content": ((get_cn_polish_prompt(text, self.prompt_type) if cn_prompt else get_en_polish_prompt(
+                     text, self.prompt_type)) if prompt is None else prompt.replace('{content}', text))}
             ],
             temperature=0.6,
             # max_tokens=1024,

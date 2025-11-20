@@ -298,3 +298,9 @@ def get_filename_by_date(file_date):
     ld = get_ld(file_date)
     filename = rf'FY4B-_AGRI--_N_DISK_{ld}E_L1-_FDI-_MULT_NOM_{file_date.strftime("%Y%m%d%H%M%S")}_{(file_date + timedelta(minutes=14, seconds=59)).strftime("%Y%m%d%H%M%S")}_4000M_V0001.HDF'
     return filename
+
+
+if __name__ == '__main__':
+    getNPfromHDF(
+        rf'D:\python_Project\Huayu_Global\file_download\FY4B-_AGRI--_N_DISK_1330E_L2-_QPE-_MULT_NOM_20220702121500_20220702122959_4000M_V0001.NC',
+        file_type='QPE')
