@@ -110,7 +110,10 @@ def np2tif(input_data, save_path='np2tif_dir', out_name='', left=None, top=None,
                 plus_name = str(temp)
             name += plus_name
             idx_tmp -= temp * np.prod(shape[s + 1:-2], axis=None)
-        name = out_name + name + '.tif'
+        if name == '':
+            name = out_name + '.tif'
+        else:
+            name = out_name + '-' + name + '.tif'
         _save_np2tif(single_np, save_path, name, coordinate=coordinate, resolution=(x_res, y_res), dtype=dtype,
                      print_log=print_log, transform=transform)
 
