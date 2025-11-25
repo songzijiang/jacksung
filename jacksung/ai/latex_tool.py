@@ -66,7 +66,12 @@ def get_cn_polish_prompt(text, prompt_type='polish'):
         以下为输入内容:
         {text}
         '''
-    return polish_prompt if prompt_type == 'polish' else check_prompt
+    if prompt_type == 'polish':
+        return polish_prompt
+    elif prompt_type == 'check':
+        return polish_prompt
+    else:
+        raise Exception(rf'Unknown prompt type {prompt_type}, please specify "polish" or "check"')
 
 
 def merge_content(tex_dir, main_tex):
@@ -124,9 +129,9 @@ class AI:
 
 def polish(main_dir_path, tex_file, server_url, token='Your token here', model_name='deepseek-r1:70b', cn_prompt=False,
            prompt=None, rewrite_list=(r'\caption{', r'\par ', r'\par{'), skip_part_list=('figure', 'table', 'equation'),
-           ignore_length=100):
+           ignore_length=100, prompt_type='polish'):
     st = Stopwatch()
-    ai = AI(token=token, base_url=server_url, model_name=model_name)
+    ai = AI(token=token, base_url=server_url, model_name=model_name, prompt_type=prompt_type)
     result_tex = merge_content(main_dir_path, tex_file)
     new_tex = ''
     up_flag = False
