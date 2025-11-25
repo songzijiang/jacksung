@@ -21,6 +21,7 @@ def get_en_polish_prompt(text, prompt_type='polish'):
     check_prompt = \
         fr'''
         # Correct grammatical errors and misspelled words in the input text while preserving the original meaning and format:
+        - If the text is free of grammatical errors and spelling mistakes, output the original text without making any modifications
         - Ensure the corrected version maintains the exact same information and intent as the original text
         - Output only the corrected text directly without any additional content
         - Preserve all mathematical formulas, symbols, and special formatting exactly as input
@@ -34,14 +35,19 @@ def get_en_polish_prompt(text, prompt_type='polish'):
         Input text:
         {text}
         '''
-    return polish_prompt if prompt_type == 'polish' else check_prompt
+    if prompt_type == 'polish':
+        return polish_prompt
+    elif prompt_type == 'check':
+        return check_prompt
+    else:
+        raise Exception(rf'Unknown prompt type {prompt_type}, please specify "polish" or "check"')
 
 
 def get_cn_polish_prompt(text, prompt_type='polish'):
     polish_prompt = \
         fr'''
         # 用学术写作风格重写下面的文本,在保持原本涵义不变的情况下使用更合适的词汇和句子结构:
-        - 确保改写后的版本传达的信息和意图与原文相同。
+        - 确保改写后的版本传达的信息和意图与原文相同
         - 请直接以latex格式输出重写后的文本，不需要包含原文、思考逻辑、注释、解释说明等其他内容。
         - 不需要输出任何输入内容中不存在的控制命令（如\documentclass、\begin、\end等），只需要使用latex格式输出数学公式、符号、引用或者输入内容中所包含的其他latex指令。
         - 注意特殊符号和公式以latex格式输出，而不是直接输出特殊字符。
@@ -54,7 +60,8 @@ def get_cn_polish_prompt(text, prompt_type='polish'):
         '''
     check_prompt = \
         fr'''
-        # 修正输入文本中的语法错误和单词拼写错误，同时保持原意和格式不变：
+        # 修正输入文本中的语法错误和单词拼写错误，同时保持原意和格式不变：\
+        - 如果如数的文本没有语法错误和单词拼写则原文输出，不做任何改动
         - 确保修正后的文本与原文的信息和意图完全相同
         - 请直接输出修正后的文本，不需要包含原文、思考逻辑、注释、解释说明等其他内容
         - 不需要输出任何输入内容中不存在的控制命令（如\documentclass、\begin、\end等），只需要使用latex格式输出数学公式、符号、引用或者输入内容中所包含的其他latex指令
