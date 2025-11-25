@@ -69,7 +69,7 @@ def get_cn_polish_prompt(text, prompt_type='polish'):
     if prompt_type == 'polish':
         return polish_prompt
     elif prompt_type == 'check':
-        return polish_prompt
+        return check_prompt
     else:
         raise Exception(rf'Unknown prompt type {prompt_type}, please specify "polish" or "check"')
 
