@@ -38,7 +38,9 @@ setup(
         'pyyaml',
         'opencv-python',
         'Pillow',
-        'openai'
+        'openai',
+        'satpy',
+        'pyresample'
     ],
     entry_points={
         'console_scripts': [
