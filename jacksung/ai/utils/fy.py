@@ -301,6 +301,8 @@ def get_filename_by_date(file_date):
 
 
 if __name__ == '__main__':
-    getNPfromHDF(
-        rf'D:\python_Project\Huayu_Global\file_download\FY4B-_AGRI--_N_DISK_1330E_L2-_QPE-_MULT_NOM_20220702121500_20220702122959_4000M_V0001.NC',
-        file_type='QPE')
+    # getNPfromHDF(rf'FY4B-_AGRI--_N_DISK_1330E_L2-_QPE-_MULT_NOM_20220702121500_20220702122959_4000M_V0001.NC',
+    #              file_type='QPE')
+    np_data = getNPfromHDF(
+        rf'FY4B-_AGRI--_N_DISK_1330E_L1-_FDI-_MULT_NOM_20221230030000_20221230031459_4000M_V0001.HDF')
+    np2tif(np_data, save_path='.', out_name='FY4B', left=133 - 60, top=60, x_res=0.05, y_res=0.05, dtype=np.float32)

@@ -127,4 +127,4 @@ def getNPfromNAT(file_path, save_file=False):
 
 
 if __name__ == '__main__':
-    np_data = getNPfromNAT("MSG4-SEVI-MSG15-0100-NA-20220701061244.251000000Z-NA.nat", save_file=True)
+    np_data = getNPfromNAT("MSG4-SEVI-MSG15-0100-NA-20221230031243.610000000Z-NA.nat", save_file=True)

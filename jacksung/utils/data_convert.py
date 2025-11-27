@@ -179,7 +179,6 @@ def get_transform_from_lonlat_matrices(
 ) -> Tuple[rasterio.Affine, float]:
     """
     从每个像素的经纬度矩阵中，拟合并输出rasterio的transform（仿射变换矩阵）
-
     参数:
         lon_array: 2D numpy数组，shape为[height, width]，存放每个像素的经度
         lat_array: 2D numpy数组，shape为[height, width]，存放每个像素的纬度
@@ -197,13 +196,11 @@ def get_transform_from_lonlat_matrices(
     height, width = lon_array.shape
     if height < 2 or width < 2:
         raise ValueError("矩阵尺寸过小（至少需要2×2像素），无法拟合transform")
-
     # 2. 均匀提取地面控制点（GCPs）- 避免边缘和密集采样，保证全局覆盖
     # 生成均匀分布的像素坐标（col, row）
     col_indices = np.linspace(0, width - 1, gcp_density, dtype=int)
     row_indices = np.linspace(0, height - 1, gcp_density, dtype=int)
     col_grid, row_grid = np.meshgrid(col_indices, row_indices)  # 网格状GCP分布
-
     # 3. 构造GCP列表（像素坐标 → 经纬度）
     gcps = []
     for row, col in zip(row_grid.flatten(), col_grid.flatten()):
@@ -214,13 +211,10 @@ def get_transform_from_lonlat_matrices(
             continue
         # GCP格式：GCP(像素列, 像素行, 经度, 纬度)
         gcps.append(GCP(col, row, lon, lat))
-
     if len(gcps) < 3:
         raise ValueError(f"有效控制点不足3个（仅{len(gcps)}个），无法拟合仿射变换")
-
     # 4. 基于GCPs拟合transform（最小二乘法）
     transform = from_gcps(gcps)
-
     # 5. 计算拟合误差（验证精度）
     errors_km = []
     for gcp in gcps:
@@ -229,13 +223,11 @@ def get_transform_from_lonlat_matrices(
         # 用半正矢公式计算实际经纬度与预测值的距离（km）
         error_km = haversine_distance(gcp.x, gcp.y, pred_lon, pred_lat)
         errors_km.append(error_km)
-
     avg_error_km = np.mean(errors_km)
     max_error_km = np.max(errors_km)
     if print_log:
         print(f"拟合完成：平均误差={avg_error_km:.3f}km，最大误差={max_error_km:.3f}km")
         print(f"提示：若误差过大（>0.5km），请增大gcp_density（当前={gcp_density}）")
-
     return transform, avg_error_km
 
 
