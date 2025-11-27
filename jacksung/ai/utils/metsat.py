@@ -31,7 +31,7 @@ def _extract_time_from_filename(filename):
         return "unknown_time"
 
 
-def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",)):
+def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",), lock=None):
     """
     核心处理函数：加载MSG数据→转换WGS84→返回numpy数组
     :param nat_file_path: MSG .nat文件路径
@@ -41,16 +41,16 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
     :return: 字典，包含通道数据、经纬度信息、元数据
     """
     try:
+        if lock is not None:
+            lock.acquire()
         # 使用seviri_l1b_native解析器（MSG .nat原生格式专用）
         scn = Scene(filenames=[nat_file_path], reader="seviri_l1b_native")
-    except Exception as e:
-        print(f"加载数据失败：{str(e)}")
-        return None
-    try:
         scn.load(channels)
     except Exception as e:
-        print(f"通道加载失败：{str(e)}")
+        print(f"加载失败：{str(e)}")
         return None
+    finally:
+        lock.release()
     ld = scn[channels[0]].attrs['orbital_parameters']['projection_longitude']
     # 5. 定义WGS84目标区域并进行重采样（保持您原有的区域定义）
     area_extent = (ld - 60, -60, ld + 60, 60.0)
@@ -99,11 +99,11 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
     return result
 
 
-def getNPfromNAT(file_path, save_file=False):
+def getNPfromNAT(file_path, save_file=False, lock=None):
     all_target_channels = ["WV_062", "WV_073", "IR_087", "IR_097", "IR_108", "IR_120", "IR_134"]
     # all_target_channels = ["VIS006", "VIS008"]
     result = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
-                                          channels=all_target_channels)
+                                          channels=all_target_channels, lock=lock)
     np_data = None
     coord = None
     if result is not None:
