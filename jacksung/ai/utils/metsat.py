@@ -3,7 +3,26 @@ from pyresample import create_area_def
 import numpy as np
 import os
 from jacksung.utils.data_convert import np2tif, Coordinate
+from contextlib import contextmanager
 
+@contextmanager
+def satpy_scene_context(filenames, reader):
+    """satpy Scene上下文管理器"""
+    scn = None
+    try:
+        scn = Scene(filenames=filenames, reader=reader)
+        yield scn
+    finally:
+        # 显式清理satpy资源
+        if scn is not None:
+            try:
+                # 尝试调用satpy的清理方法
+                if hasattr(scn, 'close'):
+                    scn.close()
+                # 手动删除引用
+                del scn
+            except Exception as e:
+                print(f"清理satpy资源时警告: {e}")
 
 def _define_wgs84_area(resolution=0.05, area_extent=(-14.5, -60, 105.5, 60.0)):
     """定义WGS84坐标系目标区域（60°N-60°S，全经度），保持您原有的区域定义"""
@@ -34,69 +53,67 @@ def _extract_time_from_filename(filename):
 def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",), lock=None):
     """
     核心处理函数：加载MSG数据→转换WGS84→返回numpy数组
-    :param nat_file_path: MSG .nat文件路径
-    :param resolution: WGS84分辨率（度），默认0.05°
-    :param resampler: 重采样方法，"nearest"（快）或"bilinear"（精）
-    :param channels: 需要处理的通道列表["WV_062", "WV_073", "IR_087", "IR_097", "IR_108", "IR_120", "IR_134"]
-    :return: 字典，包含通道数据、经纬度信息、元数据
     """
     try:
         if lock is not None:
             lock.acquire()
-        # 使用seviri_l1b_native解析器（MSG .nat原生格式专用）
-        scn = Scene(filenames=[nat_file_path], reader="seviri_l1b_native")
-        scn.load(channels)
+
+        # ========== 主要改动开始 ==========
+        # 使用上下文管理器确保Scene资源被释放（替换原来的Scene创建）
+        with satpy_scene_context(filenames=[nat_file_path], reader="seviri_l1b_native") as scn:
+            scn.load(channels)
+
+            ld = scn[channels[0]].attrs['orbital_parameters']['projection_longitude']
+            area_extent = (ld - 60, -60, ld + 60, 60.0)
+            target_area = _define_wgs84_area(resolution=resolution, area_extent=area_extent)
+
+            scn_wgs84 = scn.resample(target_area, resampler=resampler)
+
+            time_str = _extract_time_from_filename(os.path.basename(nat_file_path))
+
+            result = {
+                'data': {},
+                'metadata': {},
+                'coordinates': {},
+                'global_attrs': {
+                    'source_file': os.path.basename(nat_file_path),
+                    'processing_time': time_str,
+                    'resolution_degrees': resolution,
+                    'resampling_method': resampler,
+                    'area_extent': area_extent
+                }
+            }
+
+            # 提取每个通道的数据
+            for ch in channels:
+                try:
+                    data_array = scn_wgs84[ch].values
+                    result['data'][ch] = data_array
+                    result['metadata'][ch] = dict(scn_wgs84[ch].attrs)
+                except Exception as e:
+                    print(f"提取{ch}通道数据失败：{str(e)}")
+
+            # 提取坐标信息
+            if channels:
+                first_ch = channels[0]
+                try:
+                    area = scn_wgs84[first_ch].attrs['area']
+                    lons, lats = area.get_lonlats()
+                    result['coordinates']['longitude'] = lons
+                    result['coordinates']['latitude'] = lats
+                    result['coordinates']['shape'] = lons.shape
+                except Exception as e:
+                    print(f"提取坐标信息失败：{str(e)}")
+
+            return result
+        # ========== 主要改动结束 ==========
+
     except Exception as e:
-        print(f"加载失败：{str(e)}")
+        print(f"处理失败：{str(e)}")
         return None
     finally:
-        lock.release()
-    ld = scn[channels[0]].attrs['orbital_parameters']['projection_longitude']
-    # 5. 定义WGS84目标区域并进行重采样（保持您原有的区域定义）
-    area_extent = (ld - 60, -60, ld + 60, 60.0)
-    target_area = _define_wgs84_area(resolution=resolution, area_extent=area_extent)
-    try:
-        scn_wgs84 = scn.resample(target_area, resampler=resampler)
-    except Exception as e:
-        print(f"重采样失败：{str(e)}")
-        return None
-    # 6. 提取numpy数组和相关信息
-    time_str = _extract_time_from_filename(os.path.basename(nat_file_path))
-    # 准备返回的数据结构
-    result = {
-        'data': {},  # 各通道的numpy数组
-        'metadata': {},  # 各通道的元数据
-        'coordinates': {},  # 坐标信息
-        'global_attrs': {  # 全局属性
-            'source_file': os.path.basename(nat_file_path),
-            'processing_time': time_str,
-            'resolution_degrees': resolution,
-            'resampling_method': resampler,
-            'area_extent': area_extent  # 您的区域定义
-        }
-    }
-    # 提取每个通道的数据
-    for ch in channels:
-        try:
-            # 获取数据数组
-            data_array = scn_wgs84[ch].values
-            result['data'][ch] = data_array
-            # 获取元数据
-            result['metadata'][ch] = dict(scn_wgs84[ch].attrs)
-        except Exception as e:
-            print(f"提取{ch}通道数据失败：{str(e)}")
-    # 7. 提取坐标信息（从第一个通道获取，所有通道共享相同的坐标）
-    if channels:
-        first_ch = channels[0]
-        try:
-            area = scn_wgs84[first_ch].attrs['area']
-            lons, lats = area.get_lonlats()
-            result['coordinates']['longitude'] = lons
-            result['coordinates']['latitude'] = lats
-            result['coordinates']['shape'] = lons.shape
-        except Exception as e:
-            print(f"提取坐标信息失败：{str(e)}")
-    return result
+        if lock is not None:
+            lock.release()
 
 
 def getNPfromNAT(file_path, save_file=False, lock=None):
@@ -127,4 +144,5 @@ def getNPfromNAT(file_path, save_file=False, lock=None):
 
 
 if __name__ == '__main__':
-    np_data = getNPfromNAT("MSG4-SEVI-MSG15-0100-NA-20221230031243.610000000Z-NA.nat", save_file=True)
+    np_data = getNPfromNAT("MSG4-SEVI-MSG15-0100-NA-20221230031243.610000000Z-NA.nat", save_file=False)
+    print()
