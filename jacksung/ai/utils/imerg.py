@@ -13,7 +13,7 @@ import platform
 
 
 class Downloader:
-    def __init__(self, download_file_path, save_path=None):
+    def __init__(self, download_file_path, username,passwd,save_path=None):
         self.download_file_path = download_file_path
         if save_path is not None:
             self.save_path = save_path
@@ -22,6 +22,8 @@ class Downloader:
                 self.save_path = 'D:\\imerg'
             else:
                 self.save_path = '/mnt/data1/szj/imerg'
+        self.username=username
+        self.passwd=passwd
 
     def make_driver(self, url, is_headless=False, tmp_path=None, download_dir=None):
         options = webdriver.ChromeOptions()
@@ -121,8 +123,8 @@ class Downloader:
             time.sleep(10)
             username = driver.find_element(By.ID, 'username')
             passwd = driver.find_element(By.ID, 'password')
-            username.send_keys('chesser')
-            passwd.send_keys('az_ePR4,5L.gq/B')
+            username.send_keys(self.username)
+            passwd.send_keys(self.passwd)
             driver.find_element(By.NAME, 'commit').click()
             time.sleep(5)
             for line in f.readlines():
