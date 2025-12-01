@@ -2,8 +2,10 @@ from satpy import Scene
 from pyresample import create_area_def
 import numpy as np
 import os
+from datetime import timedelta
 from jacksung.utils.data_convert import np2tif, Coordinate
 from contextlib import contextmanager
+
 
 @contextmanager
 def satpy_scene_context(filenames, reader):
@@ -23,6 +25,7 @@ def satpy_scene_context(filenames, reader):
                 del scn
             except Exception as e:
                 print(f"清理satpy资源时警告: {e}")
+
 
 def _define_wgs84_area(resolution=0.05, area_extent=(-14.5, -60, 105.5, 60.0)):
     """定义WGS84坐标系目标区域（60°N-60°S，全经度），保持您原有的区域定义"""
@@ -141,6 +144,16 @@ def getNPfromNAT(file_path, save_file=False, lock=None):
         np2tif(np_data, save_path='np2tif_dir', coord=coord, out_name='MetSat',
                dtype='float32')
     return np_data
+
+
+def get_seviri_file_path(data_path, data_date):
+    e_date = data_date + timedelta(minutes=14, seconds=59)
+    parent_dir = rf'{data_path}/{data_date.strftime("%Y/%m/%d/")}'
+    start_date_str = data_date.strftime('%Y%m%d%H%M%S')
+    end_date_str = e_date.strftime('%Y%m%d%H%M%S')
+    for file in os.listdir(parent_dir):
+        if file.endswith('.nat') and start_date_str <= file.split('-')[5].split('.')[0] <= end_date_str:
+            return os.path.join(parent_dir, file)
 
 
 if __name__ == '__main__':
