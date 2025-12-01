@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 import netCDF4 as nc
 import numpy as np
 from einops import rearrange, repeat
-from jacksung.utils.data_convert import np2tif, get_transform_from_lonlat_matrices
+from jacksung.utils.data_convert import np2tif, get_transform_from_lonlat_matrices, Coordinate
 import xarray as xr
 from pyresample import create_area_def, kd_tree
 from pyresample.geometry import AreaDefinition
 import cartopy.crs as ccrs
 
 
-def getNPfromHDF(hdf_path, lock=None, print_log=False):
+def getNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
@@ -48,6 +48,7 @@ def getNPfromHDF(hdf_path, lock=None, print_log=False):
     )
     left = ld - 60
     right = ld + 60
+    coord = Coordinate(left=left, bottom=-60, right=right, top=60, x_res=0.05, y_res=0.05)
     np_datas = []
     target_areas = []
     if left < -180:
@@ -92,11 +93,15 @@ def getNPfromHDF(hdf_path, lock=None, print_log=False):
         np_datas.append(results)
     # 合并两部分数据
     np_data = np.concatenate(np_datas, axis=1)
-    return np_data
+    if return_coord:
+        return np_data, coord
+    else:
+        return np_data
 
 
-def getNPfromDir(dir_path, date, satellite='G18', lock=None):
+def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False):
     np_data = None
+    coord = None
     for file in os.listdir(dir_path):
         splits = file.split('_')
         year = int(splits[3][1:5])
@@ -106,11 +111,14 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None):
         file_date = datetime(year=year, month=1, day=1) + timedelta(days=doy - 1, hours=hour, minutes=minute)
         if date == file_date and splits[2] == satellite:
             channel = int(splits[1].split('-')[3][3:])
-            channel_data = getNPfromHDF(os.path.join(dir_path, file))
+            channel_data, coord = getNPfromHDF(os.path.join(dir_path, file), return_coord=True)
             if np_data is None:
                 np_data = np.full([9] + list(channel_data.shape), np.nan)
             np_data[channel - 8] = channel_data
-    return np_data
+    if return_coord:
+        return np_data, coord
+    else:
+        return np_data
 
 
 if __name__ == '__main__':

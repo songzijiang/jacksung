@@ -119,7 +119,7 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
             lock.release()
 
 
-def getNPfromNAT(file_path, save_file=False, lock=None):
+def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
     all_target_channels = ["WV_062", "WV_073", "IR_087", "IR_097", "IR_108", "IR_120", "IR_134"]
     # all_target_channels = ["VIS006", "VIS008"]
     result = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
@@ -143,7 +143,10 @@ def getNPfromNAT(file_path, save_file=False, lock=None):
     if save_file:
         np2tif(np_data, save_path='np2tif_dir', coord=coord, out_name='MetSat',
                dtype='float32')
-    return np_data
+    if return_coord:
+        return np_data, coord
+    else:
+        return np_data
 
 
 def get_seviri_file_path(data_path, data_date):
