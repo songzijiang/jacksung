@@ -19,12 +19,37 @@ class Coordinate:
         self.w = w
         self.right = right
         self.bottom = bottom
-        if x_res is None and right is not None and w is not None:
-            self.x_res = (right - left) / w
-        if y_res is None and bottom is not None and h is not None:
-            self.y_res = (top - bottom) / h
-        if self.x_res is None or self.y_res is None or self.left is None or self.top is None:
-            raise Exception(f'None parameter x_res, y_res, left, top: {self.x_res},{self.y_res},{self.left},{self.top}')
+        if self.x_res is None:
+            if self.right is None or self.w is None:
+                raise Exception('x_res is None, right or w is also None')
+            else:
+                self.x_res = (self.right - self.left) / self.w
+        if self.y_res is None:
+            if self.bottom is None or self.h is None:
+                raise Exception('y_res is None, bottom or h is also None')
+            else:
+                self.y_res = (self.top - self.bottom) / self.h
+        if self.right is None:
+            if self.x_res is None or self.w is None:
+                raise Exception('right is None, x_res or w is also None')
+            else:
+                self.right = self.left + self.x_res * self.w
+        if self.bottom is None:
+            if self.y_res is None or self.h is None:
+                raise Exception('bottom is None, y_res or h is also None')
+            else:
+                self.bottom = self.top - self.y_res * self.h
+        if self.w is None:
+            if self.right is None or self.x_res is None:
+                raise Exception('w is None, right or x_res is also None')
+            else:
+                self.w = (self.right - self.left) / self.x_res
+        if self.h is None:
+            if self.bottom is None or self.y_res is None:
+                raise Exception('h is None, bottom or y_res is also None')
+            else:
+                self.h = (self.top - self.bottom) / self.y_res
+        self.ld = (self.left + self.right) / 2
 
 
 def dms_to_d10(data):

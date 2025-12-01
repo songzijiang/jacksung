@@ -189,7 +189,7 @@ def _getNPfromHDF_worker(read_np_data, current_date, data_dir=None, ld=None, r=N
     np_data = np.zeros((out_idx - in_idx, x_range['height'], x_range['width']), dtype=np.float16)
     for i in range(in_idx, out_idx):
         out_path = f'{tmp_dir}/{save_path}-{i}-ctrl.tif'
-        registration(f'{tmp_dir}/{save_path}-{i}.tif', out_path, ld, *r)
+        _registration(f'{tmp_dir}/{save_path}-{i}.tif', out_path, ld, *r)
         img = cv2.imread(out_path, -1)
         if np.isnan(img).any():
             shutil.rmtree(tmp_dir)
@@ -215,7 +215,7 @@ def prase_filename(filename):
             'end': datetime.strptime(m_list[10], '%Y%m%d%H%M%S'), 'resolution': m_list[11]}
 
 
-def registration(input_path, out_path, ld, spatial_reference, gcps_list):
+def _registration(input_path, out_path, ld, spatial_reference, gcps_list):
     """
     基于python GDAL配准
     :param input_path: 需要配准的栅格文件
