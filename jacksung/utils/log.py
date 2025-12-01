@@ -15,7 +15,7 @@ def format_log(*args):
 
 def oprint(*args, **kwargs):
     log = format_log(*args)
-    print(log, end=kwargs.get('end', '\n'))
+    print(log, end=kwargs.get('end', '\n'), flush=kwargs.get('flush', False))
 
 
 def thread_send_log(url, content, name):
