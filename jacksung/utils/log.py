@@ -10,7 +10,7 @@ threadLock = threading.Lock()
 
 
 def format_log(*args):
-    return '[' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ']\t' + ' '.join([str(x) for x in args])
+    return '[' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '] ' + ' '.join([str(x) for x in args])
 
 
 def oprint(*args, **kwargs):
