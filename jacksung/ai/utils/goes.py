@@ -10,7 +10,7 @@ from pyresample.geometry import AreaDefinition
 import cartopy.crs as ccrs
 
 
-def getNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False):
+def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
@@ -111,7 +111,9 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
         file_date = datetime(year=year, month=1, day=1) + timedelta(days=doy - 1, hours=hour, minutes=minute)
         if date == file_date and splits[2] == satellite:
             channel = int(splits[1].split('-')[3][3:])
-            channel_data, coord = getNPfromHDF(os.path.join(dir_path, file), return_coord=True)
+            channel_data, coord = getSingleChannelNPfromHDF(os.path.join(dir_path, file), return_coord=True)
+            if channel_data is None:
+                raise Exception(f"文件{file}，通道 {channel} 数据获取失败")
             if np_data is None:
                 np_data = np.full([9] + list(channel_data.shape), np.nan)
             np_data[channel - 8] = channel_data
