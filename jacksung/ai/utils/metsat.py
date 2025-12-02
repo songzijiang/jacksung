@@ -133,7 +133,7 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
             else:
                 raise Exception(f"文件{file_path}，通道 {channel} 数据未找到")
     else:
-        print("处理失败！")
+        raise Exception(f"文件{file_path}处理失败，未获取数据")
     if save_file:
         np2tif(np_data, save_path='np2tif_dir', coord=coord, out_name='MetSat',
                dtype='float32')
