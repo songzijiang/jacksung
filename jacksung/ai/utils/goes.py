@@ -46,6 +46,7 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
         height=len(y),
         area_extent=area_extent
     )
+    ld = round(ld, 2)
     left = ld - 60
     right = ld + 60
     coord = Coordinate(left=left, bottom=-60, right=right, top=60, x_res=0.05, y_res=0.05)
