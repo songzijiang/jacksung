@@ -103,6 +103,8 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
     np_data = None
     coord = None
     for file in os.listdir(dir_path):
+        if not file.endswith('.nc'):
+            continue
         splits = file.split('_')
         year = int(splits[3][1:5])
         doy = int(splits[3][5:8])
