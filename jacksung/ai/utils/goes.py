@@ -123,8 +123,12 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
             np_data[channel - 8] = channel_data
             data_channel_count += 1
     if data_channel_count < 9:
-        raise Exception(
-            f"文件夹{dir_path}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
+        if return_coord:
+            return None, None
+        else:
+            return None
+        # raise Exception(
+            # f"文件夹{dir_path}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
     if return_coord:
         return np_data, coord
     else:
