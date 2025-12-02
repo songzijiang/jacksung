@@ -1,3 +1,5 @@
+import traceback
+
 from satpy import Scene
 from pyresample import create_area_def
 import numpy as np
@@ -60,20 +62,15 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
     try:
         if lock is not None:
             lock.acquire()
-
         # ========== 主要改动开始 ==========
         # 使用上下文管理器确保Scene资源被释放（替换原来的Scene创建）
         with satpy_scene_context(filenames=[nat_file_path], reader="seviri_l1b_native") as scn:
             scn.load(channels)
-
             ld = scn[channels[0]].attrs['orbital_parameters']['projection_longitude']
             area_extent = (ld - 60, -60, ld + 60, 60.0)
             target_area = _define_wgs84_area(resolution=resolution, area_extent=area_extent)
-
             scn_wgs84 = scn.resample(target_area, resampler=resampler)
-
             time_str = _extract_time_from_filename(os.path.basename(nat_file_path))
-
             result = {
                 'data': {},
                 'metadata': {},
@@ -86,7 +83,6 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
                     'area_extent': area_extent
                 }
             }
-
             # 提取每个通道的数据
             for ch in channels:
                 try:
@@ -95,7 +91,6 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
                     result['metadata'][ch] = dict(scn_wgs84[ch].attrs)
                 except Exception as e:
                     print(f"提取{ch}通道数据失败：{str(e)}")
-
             # 提取坐标信息
             if channels:
                 first_ch = channels[0]
@@ -107,12 +102,11 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
                     result['coordinates']['shape'] = lons.shape
                 except Exception as e:
                     print(f"提取坐标信息失败：{str(e)}")
-
             return result
         # ========== 主要改动结束 ==========
-
     except Exception as e:
         print(f"处理失败：{str(e)}")
+        traceback.print_exc()
         return None
     finally:
         if lock is not None:
@@ -139,7 +133,7 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
             else:
                 raise Exception(f"文件{file_path}，通道 {channel} 数据未找到")
     else:
-        print("\n处理失败！")
+        print("处理失败！")
     if save_file:
         np2tif(np_data, save_path='np2tif_dir', coord=coord, out_name='MetSat',
                dtype='float32')
