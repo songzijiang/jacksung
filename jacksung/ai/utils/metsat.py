@@ -56,9 +56,6 @@ def _extract_time_from_filename(filename):
 
 
 def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",), lock=None):
-    """
-    核心处理函数：加载MSG数据→转换WGS84→返回numpy数组
-    """
     try:
         if lock is not None:
             lock.acquire()
@@ -103,7 +100,6 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
                 except Exception as e:
                     print(f"提取坐标信息失败：{str(e)}")
             return result
-        # ========== 主要改动结束 ==========
     except Exception as e:
         print(f"处理失败：{str(e)}")
         traceback.print_exc()
@@ -123,7 +119,7 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
     if result is not None:
         for idx, channel in enumerate(all_target_channels):
             if channel in result['data']:
-                chann_data = result['data'][channel]
+                chann_data = result['data'][channel].copy()
                 if np_data is None:
                     np_data = np.zeros((len(all_target_channels),) + chann_data.shape, dtype=chann_data.dtype)
                     area_extent = result['global_attrs']['area_extent']
@@ -131,6 +127,7 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
                                        top=area_extent[3], x_res=0.05, y_res=0.05)
                 np_data[idx] = chann_data
             else:
+                del result
                 raise Exception(f"文件{file_path}，通道 {channel} 数据未找到")
     else:
         raise Exception(f"文件{file_path}处理失败，未获取数据")

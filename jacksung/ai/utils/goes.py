@@ -103,6 +103,7 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
 def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False):
     np_data = None
     coord = None
+    data_channel_count = 0
     for file in os.listdir(dir_path):
         if not file.endswith('.nc'):
             continue
@@ -120,6 +121,10 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
             if np_data is None:
                 np_data = np.full([9] + list(channel_data.shape), np.nan)
             np_data[channel - 8] = channel_data
+            data_channel_count += 1
+    if data_channel_count < 9:
+        raise Exception(
+            f"文件夹{dir_path}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
     if return_coord:
         return np_data, coord
     else:
