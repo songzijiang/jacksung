@@ -48,7 +48,6 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
     )
     left = ld - 60
     right = ld + 60
-    print('goes subpoint:' + str(ld))
     coord = Coordinate(left=left, bottom=-60, right=right, top=60, x_res=0.05, y_res=0.05)
     np_datas = []
     target_areas = []
