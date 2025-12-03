@@ -55,7 +55,8 @@ def _extract_time_from_filename(filename):
         return "unknown_time"
 
 
-def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",), lock=None):
+def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="nearest", channels=("WV_062",), lock=None,
+                                 only_ld=False):
     try:
         if lock is not None:
             lock.acquire()
@@ -64,6 +65,8 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
         with satpy_scene_context(filenames=[nat_file_path], reader="seviri_l1b_native") as scn:
             scn.load(channels)
             ld = scn[channels[0]].attrs['orbital_parameters']['projection_longitude']
+            if only_ld:
+                return ld
             area_extent = (ld - 60, -60, ld + 60, 60.0)
             target_area = _define_wgs84_area(resolution=resolution, area_extent=area_extent)
             scn_wgs84 = scn.resample(target_area, resampler=resampler)
@@ -112,8 +115,13 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
 def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False, only_coord=False):
     all_target_channels = ["WV_062", "WV_073", "IR_087", "IR_097", "IR_108", "IR_120", "IR_134"]
     # all_target_channels = ["VIS006", "VIS008"]
-    result = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
-                                          channels=all_target_channels, lock=lock)
+    if only_coord:
+        ld = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
+                                          channels=all_target_channels, lock=lock, only_ld=True)
+        return Coordinate(left=ld - 60, bottom=-60, right=ld + 60, top=60, x_res=0.05, y_res=0.05)
+    else:
+        result = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
+                                              channels=all_target_channels, lock=lock, only_ld=False)
     np_data = None
     coord = None
     if result is not None:
