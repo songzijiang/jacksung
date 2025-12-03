@@ -10,7 +10,7 @@ from pyresample.geometry import AreaDefinition
 import cartopy.crs as ccrs
 
 
-def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False):
+def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False, only_coord=False):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
@@ -50,6 +50,8 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
     left = ld - 60
     right = ld + 60
     coord = Coordinate(left=left, bottom=-60, right=right, top=60, x_res=0.05, y_res=0.05)
+    if only_coord:
+        return coord
     np_datas = []
     target_areas = []
     if left < -180:

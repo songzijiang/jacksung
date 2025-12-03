@@ -109,7 +109,7 @@ def _process_msg_seviri_to_numpy(nat_file_path, resolution=0.05, resampler="near
             lock.release()
 
 
-def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
+def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False, only_coord=False):
     all_target_channels = ["WV_062", "WV_073", "IR_087", "IR_097", "IR_108", "IR_120", "IR_134"]
     # all_target_channels = ["VIS006", "VIS008"]
     result = _process_msg_seviri_to_numpy(nat_file_path=file_path, resolution=0.05, resampler="nearest",
@@ -125,6 +125,8 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False):
                     area_extent = result['global_attrs']['area_extent']
                     coord = Coordinate(left=area_extent[0], bottom=area_extent[1], right=area_extent[2],
                                        top=area_extent[3], x_res=0.05, y_res=0.05)
+                    if only_coord:
+                        return coord
                 np_data[idx] = chann_data
             else:
                 del result
