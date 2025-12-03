@@ -117,12 +117,11 @@ def get_filename_by_date_from_dir(dir_path, date, satellite='G18'):
     return file_lists
 
 
-def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False):
+def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False, infos=None):
     np_data = None
     coord = None
     data_channel_count = 0
     files = get_filename_by_date_from_dir(dir_path, date, satellite)
-    infos = None
     for channel, file in files.items():
         if infos is None:
             infos = get_resample_infos(os.path.join(dir_path, file), lock=lock)
