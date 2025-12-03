@@ -102,10 +102,8 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
         return np_data
 
 
-def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False):
-    np_data = None
-    coord = None
-    data_channel_count = 0
+def get_filename_by_date_from_dir(dir_path, date, satellite='G18'):
+    file_lists = {}
     for file in os.listdir(dir_path):
         if not file.endswith('.nc'):
             continue
@@ -116,14 +114,23 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
         minute = int(splits[3][10:12])
         file_date = datetime(year=year, month=1, day=1) + timedelta(days=doy - 1, hours=hour, minutes=minute)
         if date == file_date and splits[2] == satellite:
-            channel = int(splits[1].split('-')[3][3:])
-            channel_data, coord = getSingleChannelNPfromHDF(os.path.join(dir_path, file), return_coord=True)
-            if channel_data is None:
-                raise Exception(f"文件{file}，通道 {channel} 数据获取失败")
-            if np_data is None:
-                np_data = np.full([9] + list(channel_data.shape), np.nan)
-            np_data[channel - 8] = channel_data
-            data_channel_count += 1
+            file_lists[int(splits[1].split('-')[3][3:])] = file
+    return file_lists
+
+
+def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False):
+    np_data = None
+    coord = None
+    data_channel_count = 0
+    files = get_filename_by_date_from_dir(dir_path, date, satellite)
+    for channel, file in files.items():
+        channel_data, coord = getSingleChannelNPfromHDF(os.path.join(dir_path, file), return_coord=True)
+        if channel_data is None:
+            raise Exception(f"文件{file}，通道 {channel} 数据获取失败")
+        if np_data is None:
+            np_data = np.full([9] + list(channel_data.shape), np.nan)
+        np_data[channel - 8] = channel_data
+        data_channel_count += 1
     if data_channel_count < 9:
         raise Exception(
             f"文件夹{dir_path}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
