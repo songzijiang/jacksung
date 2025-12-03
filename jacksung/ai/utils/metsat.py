@@ -133,8 +133,6 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False, only
                     area_extent = result['global_attrs']['area_extent']
                     coord = Coordinate(left=area_extent[0], bottom=area_extent[1], right=area_extent[2],
                                        top=area_extent[3], x_res=0.05, y_res=0.05)
-                    if only_coord:
-                        return coord
                 np_data[idx] = chann_data
             else:
                 del result
