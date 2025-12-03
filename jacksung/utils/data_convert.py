@@ -49,6 +49,7 @@ class Coordinate:
                 raise Exception('h is None, bottom or y_res is also None')
             else:
                 self.h = (self.top - self.bottom) / self.y_res
+        self.h, self.w = int(self.h), int(self.w)
         self.ld = (self.left + self.right) / 2
 
 

@@ -7,17 +7,16 @@ from jacksung.utils.data_convert import np2tif, get_transform_from_lonlat_matric
 import xarray as xr
 from pyresample import create_area_def, kd_tree
 from pyresample.geometry import AreaDefinition
-import cartopy.crs as ccrs
+from jacksung.utils.time import Stopwatch
 
 
-def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord=False, only_coord=False):
+def get_resample_infos(hdf_path, lock=None):
     if lock:
         lock.acquire()
     ds = nc.Dataset(hdf_path)
     if lock:
         lock.release()
     ld = float(ds['nominal_satellite_subpoint_lon'][:])
-    np_data = np.array(ds['Rad'][:]).astype(np.float32)
     # 原始GEOS投影
     goes_proj_str = ds['goes_imager_projection']
     h = float(goes_proj_str.perspective_point_height)
@@ -29,9 +28,7 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
     area_extent = (x[0] - half_pixel_width, y[-1] - half_pixel_height,
                    x[-1] + half_pixel_width, y[0] + half_pixel_height)
     goes_area = AreaDefinition(
-        area_id='goes_fixed_grid',
-        proj_id='goes_geos',  # 新增的必需参数
-        description='GOES Fixed Grid',
+        area_id='goes_fixed_grid', proj_id='goes_geos', description='GOES Fixed Grid',
         projection={
             'proj': 'geos',
             'lon_0': goes_proj_str.longitude_of_projection_origin,
@@ -42,10 +39,44 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
             'b': goes_proj_str.semi_minor_axis,
             'sweep': goes_proj_str.sweep_angle_axis
         },
-        width=len(x),
-        height=len(y),
-        area_extent=area_extent
-    )
+        width=len(x), height=len(y), area_extent=area_extent)
+    ld = round(ld, 2)
+    left = ld - 60
+    right = ld + 60
+    target_areas = []
+    if left < -180:
+        # 跨越180度经线，分两部分重采样
+        # 左半部分
+        target_area_left = create_area_def(
+            area_id='wgs84_left', projection='EPSG:4326', area_extent=[left + 360, -60, 180, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area_left)
+        # 右半部分
+        target_area_right = create_area_def(
+            area_id='wgs84_right', projection='EPSG:4326', area_extent=[-180, -60, right, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area_right)
+    else:
+        target_area = create_area_def(
+            area_id='wgs84', projection='EPSG:4326', area_extent=[left, -60, right, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area)
+    resample_infos = []
+    for target_area in target_areas:
+        # 使用最近邻法重采样，对于分类数据；对于连续数据，可以使用 ‘bilinear’
+        resample_infos.append(
+            kd_tree.get_neighbour_info(goes_area, target_area, radius_of_influence=5000, neighbours=1))
+    return resample_infos
+
+
+def getSingleChannelNPfromHDF(hdf_path, lock=None, return_coord=False, only_coord=False, resample_infos=None):
+    if lock:
+        lock.acquire()
+    ds = nc.Dataset(hdf_path)
+    if lock:
+        lock.release()
+    ld = float(ds['nominal_satellite_subpoint_lon'][:])
+    np_data = np.array(ds['Rad'][:]).astype(np.float32)
     ld = round(ld, 2)
     left = ld - 60
     right = ld + 60
@@ -53,46 +84,14 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, print_log=False, return_coord
     if only_coord:
         return coord
     np_datas = []
-    target_areas = []
-    if left < -180:
-        # 跨越180度经线，分两部分重采样
-        # 左半部分
-        target_area_left = create_area_def(
-            area_id='wgs84_left',
-            projection='EPSG:4326',  # WGS84的EPSG代码
-            area_extent=[left + 360, -60, 180, 60],
-            resolution=(0.05, 0.05),  # 分辨率，例如 0.05度 (约5.5km)
-            units='degrees'
-        )
-        target_areas.append(target_area_left)
-        # 右半部分
-        target_area_right = create_area_def(
-            area_id='wgs84_right',
-            projection='EPSG:4326',  # WGS84的EPSG代码
-            area_extent=[-180, -60, right, 60],
-            resolution=(0.05, 0.05),  # 分辨率，例如 0.05度 (约5.5km)
-            units='degrees'
-        )
-        target_areas.append(target_area_right)
-    else:
-        target_area = create_area_def(
-            area_id='wgs84',
-            projection='EPSG:4326',  # WGS84的EPSG代码
-            area_extent=[left, -60, right, 60],
-            resolution=(0.05, 0.05),  # 分辨率，例如 0.05度 (约5.5km)
-            units='degrees'
-        )
-        target_areas.append(target_area)
-
-    for target_area in target_areas:
+    if resample_infos is None:
+        resample_infos = get_resample_infos(hdf_path, lock=lock)
+    for info in resample_infos:
+        valid_input_index, valid_output_index, index_array, distance_array = info
         # 使用最近邻法重采样，对于分类数据；对于连续数据，可以使用 ‘bilinear’
-        results = kd_tree.resample_nearest(
-            goes_area,
-            np_data,  # 原始数据数组
-            target_area,
-            radius_of_influence=50000,  # 搜索半径 (米)，对于高分辨率数据可能需要调整
-            fill_value=np.nan  # 无数据区域填充值
-        )
+        results = kd_tree.get_sample_from_neighbour_info(
+            'nn', output_shape=(coord.h, int(len(info[1]) / 2400)), data=np_data, valid_input_index=valid_input_index,
+            valid_output_index=valid_output_index, index_array=index_array, fill_value=np.nan)
         np_datas.append(results)
     # 合并两部分数据
     np_data = np.concatenate(np_datas, axis=1)
@@ -123,8 +122,12 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False)
     coord = None
     data_channel_count = 0
     files = get_filename_by_date_from_dir(dir_path, date, satellite)
+    infos = None
     for channel, file in files.items():
-        channel_data, coord = getSingleChannelNPfromHDF(os.path.join(dir_path, file), return_coord=True)
+        if infos is None:
+            infos = get_resample_infos(os.path.join(dir_path, file), lock=lock)
+        channel_data, coord = getSingleChannelNPfromHDF(
+            os.path.join(dir_path, file), return_coord=True, resample_infos=infos)
         if channel_data is None:
             raise Exception(f"文件{file}，通道 {channel} 数据获取失败")
         if np_data is None:
