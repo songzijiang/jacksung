@@ -18,6 +18,7 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
     if lock:
         lock.release()
     ld = float(ds['nominal_satellite_subpoint_lon'][:])
+    ld = round(ld, 2)
     if cache:
         cache_result = cache.get_key_in_cache(ld)
         if cache_result is not None:
@@ -45,7 +46,6 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
             'sweep': goes_proj_str.sweep_angle_axis
         },
         width=len(x), height=len(y), area_extent=area_extent)
-    ld = round(ld, 2)
     left = ld - 60
     right = ld + 60
     target_areas = []
