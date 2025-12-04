@@ -22,6 +22,7 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
     if cache:
         cache_result = cache.get_key_in_cache(ld)
         if cache_result is not None:
+            print(f'从缓存中获取GOES重采样信息，子午线经度: {ld}')
             return cache_result
     # 原始GEOS投影
     goes_proj_str = ds['goes_imager_projection']
@@ -72,7 +73,10 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
         resample_infos.append(
             kd_tree.get_neighbour_info(goes_area, target_area, radius_of_influence=5000, neighbours=1))
     if cache:
+        print(f'将GOES重采样信息加入缓存，子午线经度: {ld}')
         cache.add_key(ld, resample_infos)
+    else:
+        print(f'未使用缓存，计算GOES重采样信息，子午线经度: {ld}')
     return resample_infos
 
 
