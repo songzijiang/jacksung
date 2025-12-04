@@ -14,6 +14,7 @@ import yaml
 import argparse
 from datetime import datetime, timedelta
 from matplotlib.ticker import MaxNLocator
+import random
 
 
 def load_model(model, state_dict, strict=True):
@@ -182,6 +183,24 @@ def _get_color_normalization(data, colors):
     for color in colors:
         new_colors.append([(color[0] - min_value) / (max_value - min_value), color[1]])
     return data, new_colors
+
+
+def data_augmentation(images):
+    # 旋转
+    rotate = random.random()
+    if 0 <= rotate < 0.25:
+        images = [torch.rot90(image, 1, [2, 3]) for image in images]
+    elif 0.25 <= rotate < 0.5:
+        images = [torch.rot90(image, 2, [2, 3]) for image in images]
+    elif 0.5 <= rotate < 0.75:
+        images = [torch.rot90(image, 3, [2, 3]) for image in images]
+    # 水平翻折
+    if random.random() > 0.5:
+        images = [torch.flip(image, [2]) for image in images]
+    # 垂直翻折
+    if random.random() > 0.5:
+        images = [torch.flip(image, [3]) for image in images]
+    return images
 
 
 def make_fig(file_name, root_path, out_folder=None, tz='UTC',
