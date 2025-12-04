@@ -23,58 +23,58 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
         cache_result = cache.get_key_in_cache(ld)
         if cache_result is not None:
             return cache_result
+    # 原始GEOS投影
+    goes_proj_str = ds['goes_imager_projection']
+    h = float(goes_proj_str.perspective_point_height)
+    x = ds['x'][:] * h  # 投影x坐标 (radians)
+    y = ds['y'][:] * h  # 投影y坐标 (radians)
+    # 计算投影范围 (根据x, y的边界)
+    half_pixel_width = (x[1] - x[0]) / 2.0
+    half_pixel_height = (y[1] - y[0]) / 2.0
+    area_extent = (x[0] - half_pixel_width, y[-1] - half_pixel_height,
+                   x[-1] + half_pixel_width, y[0] + half_pixel_height)
+    goes_area = AreaDefinition(
+        area_id='goes_fixed_grid', proj_id='goes_geos', description='GOES Fixed Grid',
+        projection={
+            'proj': 'geos',
+            'lon_0': goes_proj_str.longitude_of_projection_origin,
+            'h': goes_proj_str.perspective_point_height,
+            'x_0': 0,
+            'y_0': 0,
+            'a': goes_proj_str.semi_major_axis,
+            'b': goes_proj_str.semi_minor_axis,
+            'sweep': goes_proj_str.sweep_angle_axis
+        },
+        width=len(x), height=len(y), area_extent=area_extent)
+    ld = round(ld, 2)
+    left = ld - 60
+    right = ld + 60
+    target_areas = []
+    if left < -180:
+        # 跨越180度经线，分两部分重采样
+        # 左半部分
+        target_area_left = create_area_def(
+            area_id='wgs84_left', projection='EPSG:4326', area_extent=[left + 360, -60, 180, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area_left)
+        # 右半部分
+        target_area_right = create_area_def(
+            area_id='wgs84_right', projection='EPSG:4326', area_extent=[-180, -60, right, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area_right)
     else:
-        # 原始GEOS投影
-        goes_proj_str = ds['goes_imager_projection']
-        h = float(goes_proj_str.perspective_point_height)
-        x = ds['x'][:] * h  # 投影x坐标 (radians)
-        y = ds['y'][:] * h  # 投影y坐标 (radians)
-        # 计算投影范围 (根据x, y的边界)
-        half_pixel_width = (x[1] - x[0]) / 2.0
-        half_pixel_height = (y[1] - y[0]) / 2.0
-        area_extent = (x[0] - half_pixel_width, y[-1] - half_pixel_height,
-                       x[-1] + half_pixel_width, y[0] + half_pixel_height)
-        goes_area = AreaDefinition(
-            area_id='goes_fixed_grid', proj_id='goes_geos', description='GOES Fixed Grid',
-            projection={
-                'proj': 'geos',
-                'lon_0': goes_proj_str.longitude_of_projection_origin,
-                'h': goes_proj_str.perspective_point_height,
-                'x_0': 0,
-                'y_0': 0,
-                'a': goes_proj_str.semi_major_axis,
-                'b': goes_proj_str.semi_minor_axis,
-                'sweep': goes_proj_str.sweep_angle_axis
-            },
-            width=len(x), height=len(y), area_extent=area_extent)
-        ld = round(ld, 2)
-        left = ld - 60
-        right = ld + 60
-        target_areas = []
-        if left < -180:
-            # 跨越180度经线，分两部分重采样
-            # 左半部分
-            target_area_left = create_area_def(
-                area_id='wgs84_left', projection='EPSG:4326', area_extent=[left + 360, -60, 180, 60],
-                resolution=(0.05, 0.05), units='degrees')
-            target_areas.append(target_area_left)
-            # 右半部分
-            target_area_right = create_area_def(
-                area_id='wgs84_right', projection='EPSG:4326', area_extent=[-180, -60, right, 60],
-                resolution=(0.05, 0.05), units='degrees')
-            target_areas.append(target_area_right)
-        else:
-            target_area = create_area_def(
-                area_id='wgs84', projection='EPSG:4326', area_extent=[left, -60, right, 60],
-                resolution=(0.05, 0.05), units='degrees')
-            target_areas.append(target_area)
-        resample_infos = []
-        for target_area in target_areas:
-            # 使用最近邻法重采样，对于分类数据；对于连续数据，可以使用 ‘bilinear’
-            resample_infos.append(
-                kd_tree.get_neighbour_info(goes_area, target_area, radius_of_influence=5000, neighbours=1))
+        target_area = create_area_def(
+            area_id='wgs84', projection='EPSG:4326', area_extent=[left, -60, right, 60],
+            resolution=(0.05, 0.05), units='degrees')
+        target_areas.append(target_area)
+    resample_infos = []
+    for target_area in target_areas:
+        # 使用最近邻法重采样，对于分类数据；对于连续数据，可以使用 ‘bilinear’
+        resample_infos.append(
+            kd_tree.get_neighbour_info(goes_area, target_area, radius_of_influence=5000, neighbours=1))
+    if cache:
         cache.add_key(ld, resample_infos)
-        return resample_infos
+    return resample_infos
 
 
 def getSingleChannelNPfromHDF(hdf_path, lock=None, return_coord=False, only_coord=False, resample_infos=None):
