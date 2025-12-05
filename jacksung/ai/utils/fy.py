@@ -139,18 +139,27 @@ def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140,
     return np_data
 
 
-def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None):
+def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None, return_coord=False):
+    prase_data = prase_filename(os.path.basename(hdf_path))
+    ld = prase_data['position']
+    coord = Coordinate(left=ld - 60, top=60, right=ld + 60, bottom=-60, x_res=0.05, y_res=0.05)
     if cache is not None:
         n_data = cache.get_key_in_cache(hdf_path + file_type)
         if n_data is None:
             n_data = _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
             cache.add_key(hdf_path + file_type, 'None' if n_data is None else n_data)
         if type(n_data) == str and n_data == 'None':
-            return None
+            if return_coord:
+                return None, None
+            else:
+                return None
         else:
-            return n_data
+            if return_coord:
+                return n_data, coord
+            else:
+                return n_data
     else:
-        return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
+        return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock), coord
 
 
 def _getNPfromHDF(hdf_path, file_type='FDI', lock=None):
@@ -224,7 +233,7 @@ def _getNPfromHDF_worker(read_np_data, current_date, data_dir=None, ld=None, r=N
 def prase_filename(filename):
     m_list = filename.replace('.HDF', '').split('_')
     # FY4B-_AGRI--_N_DISK_1050E_L1-_FDI-_MULT_NOM_20250606171500_20250606172959_4000M_V0001.HDF
-    return {'satellite': m_list[0], 'sensor': m_list[1], 'area': m_list[3], 'position': int(m_list[4][:3]),
+    return {'satellite': m_list[0], 'sensor': m_list[1], 'area': m_list[3], 'position': round(float(m_list[4][:3]), 2),
             'file_level': m_list[5], 'data_name': m_list[6], 'start': datetime.strptime(m_list[9], '%Y%m%d%H%M%S'),
             'end': datetime.strptime(m_list[10], '%Y%m%d%H%M%S'), 'resolution': m_list[11]}
 
