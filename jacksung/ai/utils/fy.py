@@ -117,6 +117,20 @@ def get_reference(ld):
     return spatial_reference, gcps_list
 
 
+def get_agri_file_path(data_path, data_date):
+    e_date = data_date + timedelta(minutes=14, seconds=59)
+    # /mnt/data1/szj/FY/downloaded_file
+    # FY4B-_AGRI--_N_DISK_1330E_L1-_FDI-_MULT_NOM_20221007234500_20221007235959_4000M_V0001.HDF
+    parent_dir = rf'{data_path}/{data_date.year}/{data_date.month}/{data_date.day}'
+    start_date_str = data_date.strftime('%Y%m%d%H%M%S')
+    end_date_str = e_date.strftime('%Y%m%d%H%M%S')
+    file_path = rf'{parent_dir}/FY4B-_AGRI--_N_DISK_{get_ld(data_date)}0E_L1-_FDI-_MULT_NOM_{start_date_str}_{end_date_str}_4000M_V0001.HDF'
+    if os.path.exists(file_path):
+        return file_path
+    else:
+        return None
+
+
 def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140, 10), (20, 60, 10)), cache=None):
     lon_d = int((ld - (area[0][0] + area[0][1]) / 2) * 20)
     lat_d = int(((area[1][0] + area[1][1]) / 2) * 20)

@@ -150,7 +150,7 @@ def getNPfromNAT(file_path, save_file=False, lock=None, return_coord=False, only
 
 def get_seviri_file_path(data_path, data_date):
     e_date = data_date + timedelta(minutes=14, seconds=59)
-    parent_dir = rf'{data_path}/{data_date.strftime("%Y/%m/%d/")}'
+    parent_dir = rf'{data_path}/{data_date.year}/{data_date.month}/{data_date.day}/'
     start_date_str = data_date.strftime('%Y%m%d%H%M%S')
     end_date_str = e_date.strftime('%Y%m%d%H%M%S')
     for file in os.listdir(parent_dir):
