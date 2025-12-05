@@ -139,10 +139,12 @@ def getNPfromHDFClip(ld, file_path, file_type='FDI', lock=None, area=((100, 140,
     return np_data
 
 
-def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None, return_coord=False):
+def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None, return_coord=False, only_coord=False):
     prase_data = prase_filename(os.path.basename(hdf_path))
     ld = prase_data['position']
     coord = Coordinate(left=ld - 60, top=60, right=ld + 60, bottom=-60, x_res=0.05, y_res=0.05)
+    if only_coord:
+        return coord
     if cache is not None:
         n_data = cache.get_key_in_cache(hdf_path + file_type)
         if n_data is None:
