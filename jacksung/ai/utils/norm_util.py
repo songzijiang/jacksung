@@ -86,3 +86,24 @@ class PremNormalization:
             # data[:, 0][data[:, 0] == 0] = torch.inf
             # data[:, 0] = 1 / (data[:, 0].clone() ** 2)
         return rearrange(data, 'b h w c->b c h w')
+
+
+class Normalization:
+    def __init__(self, mean_std_npy, idx=None):
+        mean_std = torch.from_numpy(mean_std_npy.astype(np.float32))
+        if idx:
+            self.mean = mean_std[0, idx[0]:idx[1]]
+            self.std = mean_std[1, idx[0]:idx[1]]
+        else:
+            self.mean = mean_std[0]
+            self.std = mean_std[1]
+
+    def norm(self, data):
+        data = rearrange(data, 'b c h w->b h w c')
+        data = (data - self.mean) / self.std
+        return rearrange(data, 'b h w c->b c h w')
+
+    def denorm(self, data):
+        data = rearrange(data, 'b c h w->b h w c')
+        data = data * self.std + self.mean
+        return rearrange(data, 'b h w c->b c h w')
