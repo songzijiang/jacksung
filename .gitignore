@@ -33,7 +33,7 @@ completed.log
 *.onnx
 build
 jacksung.egg-info
-jacksungdev.egg-info
+jacksungtest.egg-info
 dist
 test.py
 loacaldb.json
