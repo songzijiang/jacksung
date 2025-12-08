@@ -67,7 +67,7 @@ class MultiTasks:
 
     def execute_task_nowait(self, save=False, print_log=False):
         if print_log:
-            print('Now running tasks:', rf'{self.submitted}/{len(self.task_list)}')
+            print('Now running tasks:', rf'{len(self.submitted)}/{len(self.task_list)}')
         for k, f_and_a in self.task_list.items():
             if k not in self.submitted:
                 r = self.executor.submit(f_and_a[0], *f_and_a[1])
@@ -85,7 +85,7 @@ class MultiTasks:
                 self.progress_bar.update(1)
             else:
                 # 进程环境下需要特殊处理，这里简化处理
-                pass
+                raise Exception('进程环境下需要特殊处理，这里简化处理.')
         return result
 
     def execute_task(self, print_percent=True, desc=None):
