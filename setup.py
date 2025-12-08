@@ -6,7 +6,7 @@ import subprocess
 
 shutil.rmtree('build', ignore_errors=True)
 shutil.rmtree('dist', ignore_errors=True)
-shutil.rmtree('jacksungtest.egg-info', ignore_errors=True)
+shutil.rmtree('jacksung_dev.egg-info', ignore_errors=True)
 db = TinyDB('loacaldb.json')
 infos = db.all()
 if len(infos) == 0:
@@ -18,7 +18,7 @@ version = '.'.join(version.split('.')[:-1]) + '.' + str(int(version.split('.')[-
 db.update({'version': version})
 db.close()
 setup(
-    name='jacksungtest',
+    name='jacksung_dev',
     version=version,
     author='Zijiang Song',
     long_description=open('README.md').read(),
