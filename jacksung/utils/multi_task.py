@@ -65,7 +65,9 @@ class MultiTasks:
     def add_task(self, k, function, args):
         self.task_list[k] = (function, args)
 
-    def execute_task_nowait(self, save=False):
+    def execute_task_nowait(self, save=False, print_log=False):
+        if print_log:
+            print('Now running tasks:', rf'{self.submitted}/{len(self.task_list)}')
         for k, f_and_a in self.task_list.items():
             if k not in self.submitted:
                 r = self.executor.submit(f_and_a[0], *f_and_a[1])
