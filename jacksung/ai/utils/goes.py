@@ -45,6 +45,7 @@ def get_resample_infos(hdf_path, lock=None, cache=None):
             'b': goes_proj_str.semi_minor_axis,
             'sweep': goes_proj_str.sweep_angle_axis
         },
+
         width=len(x), height=len(y), area_extent=area_extent)
     left = ld - 60
     right = ld + 60

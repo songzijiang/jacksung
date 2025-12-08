@@ -41,12 +41,15 @@ def load_model(model, state_dict, strict=True):
             print(f'{name} not loaded by model')
 
 
-def get_stat_dict(metrics):
-    stat_dict = {
-        'epochs': 0, 'loss': [], 'metrics': {}}
+def get_stat_dict(metrics, extra_info=None):
+    if extra_info is None:
+        extra_info = dict()
+    stat_dict = {'epochs': 0, 'loss': [], 'metrics': {}}
     for idx, metrics in enumerate(metrics):
         name, default_value, op = metrics
         stat_dict['metrics'][name] = {'value': [], 'best': {'value': default_value, 'epoch': 0, 'op': op}}
+    for key, value in extra_info.items():
+        stat_dict[key] = value
     return stat_dict
 
 
@@ -64,10 +67,10 @@ def data_to_device(datas, device, fp=32):
     return outs
 
 
-def draw_lines(yaml_path):
+def draw_lines(stat_dict_path):
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
     print('[TemporaryTag]Producing the LinePicture of Log...', end='[TemporaryTag]\n')
-    yaml_args = yaml.load(open(yaml_path), Loader=yaml.FullLoader)
+    yaml_args = yaml.load(open(stat_dict_path), Loader=yaml.FullLoader)
     # 创建图表
     m_len = len(yaml_args['metrics'])
     sub_loss_count = 0
@@ -76,7 +79,7 @@ def draw_lines(yaml_path):
             sub_loss_count += 1
         else:
             break
-    plt.figure(figsize=(10 * (m_len + sub_loss_count), 6))  # 设置图表的大小
+    plt.figure(figsize=(8 * (m_len + sub_loss_count), 6))  # 设置图表的大小
     x = np.array(range(1, yaml_args['epochs'] + 1))
     for idx, d in enumerate(yaml_args['metrics'].items()):
         m_name, m_value = d
@@ -90,13 +93,14 @@ def draw_lines(yaml_path):
         y = np.array(yaml_args[f'loss{i}es'])
         plt.subplot(1, m_len + sub_loss_count, m_len + i + 1)
         scale = len(y) / yaml_args['epochs']
+        # 把X坐标的纯统计范围缩放到和其他图表一致(epoch)
         x = np.array(range(1, len(y) + 1)) / scale
         plt.plot(x, y)
         plt.title(f'Loss{i}')
         plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     # 添加图例
     # plt.legend()
-    plt.savefig(os.path.join(os.path.dirname(yaml_path), 'Metrics.jpg'))
+    plt.savefig(os.path.join(os.path.dirname(stat_dict_path), 'Metrics.jpg'))
 
 
 def make_best_metric(stat_dict, metrics, epoch, save_model_param, server_log_param):
