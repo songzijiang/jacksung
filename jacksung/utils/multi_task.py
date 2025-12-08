@@ -45,6 +45,7 @@ class MultiTasks:
         self.task_list = {}
         self.features = {}
         self.results = {}
+        self.submitted = []
         self.pool_type = pool
 
         if pool == type_thread:
@@ -66,9 +67,11 @@ class MultiTasks:
 
     def execute_task_nowait(self, save=False):
         for k, f_and_a in self.task_list.items():
-            r = self.executor.submit(f_and_a[0], *f_and_a[1])
-            if save:
-                self.features[k] = r
+            if k not in self.submitted:
+                r = self.executor.submit(f_and_a[0], *f_and_a[1])
+                if save:
+                    self.features[k] = r
+                self.submitted.append(k)
 
     def wrap_fun(self, fun, args):
         """包装函数，处理进度条更新"""
