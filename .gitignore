@@ -36,3 +36,8 @@ jacksung.egg-info
 dist
 test.py
 loacaldb.json
+*.tif
+*.xml
+*.nc
+*.HDF
+*.nat
