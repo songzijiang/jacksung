@@ -6,7 +6,7 @@ import subprocess
 
 shutil.rmtree('build', ignore_errors=True)
 shutil.rmtree('dist', ignore_errors=True)
-shutil.rmtree('jacksung.egg-info', ignore_errors=True)
+shutil.rmtree('jacksungtest.egg-info', ignore_errors=True)
 db = TinyDB('loacaldb.json')
 infos = db.all()
 if len(infos) == 0:
