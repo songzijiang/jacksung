@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
-from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, PremNormalization
+from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, Normalization
 import numpy as np
 from jacksung.utils.data_convert import np2tif
 from jacksung.utils.cache import Cache
@@ -61,14 +61,14 @@ class GeoAttX:
         self.dir_name = dir_name
         self.root_path = os.path.join(root_path, dir_name)
 
-    def load_model(self, path, version=1):
+    def load_model(self, path, version=1, c_in=None):
         if version == 1:
             model = GeoNet(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
                            c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
                            num_heads=self.args.num_heads, task=self.task_type if self.task_type else self.args.task,
                            downstage=self.args.downstage)
         else:
-            model = GeoNetV2(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=self.args.c_in,
+            model = GeoNetV2(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=c_in,
                              c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
                              num_heads=self.args.num_heads, downstage=self.args.downstage)
 
@@ -275,11 +275,22 @@ class GeoAttX_P(GeoAttX):
 
 class Huayu(GeoAttX):
     def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10)),
-                 device=None, sensor=AGRI):
+                 device=None):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
         if device is not None:
             self.device = device
-        self.model = self.load_model(model_path, version=2)
+        if self.args.sensor_type == AGRI:
+            self.satellite_num = 2
+            self.satellite_channel = 7
+        elif self.args.sensor_type == ABI:
+            self.satellite_num = 3
+            self.satellite_channel = 9
+        elif self.args.sensor_type == SEVIRI:
+            self.satellite_num = 2
+            self.satellite_channel = 7
+        else:
+            raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
+        self.model = self.load_model(model_path, version=2, c_in=self.satellite_channel)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
@@ -291,15 +302,21 @@ class Huayu(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, fy_npy, smooth=True, up=True):
+    def predict(self, satellite_npy, smooth=True, up=True):
         try:
-            n_data = _get_np_array(fy_npy)
+            n_data = _get_np_array(satellite_npy)
             n_data = torch.from_numpy(n_data)
-            norm = PremNormalization(self.args.prec_data_path)
-            norm.mean, norm.std = data_to_device([norm.mean, norm.std], self.device, self.args.fp)
+            mean_std_npy = np.load(os.path.join(rf'{self.args.data_path}', 'mean_std.npy'))
+            satellite_norm = Normalization(mean_std_npy, (0, self.satellite_channel))
+            imerg_norm = Normalization(mean_std_npy,
+                                       (self.satellite_channel * self.satellite_num,
+                                        self.satellite_channel * self.satellite_num + 3))
+            satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std = \
+                data_to_device([satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std],
+                               self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
-            n = norm.norm(n_data, fy_norm=True)[:, :, :, :]
+            n = satellite_norm.norm(n_data)[:, :, :, :]
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
             if smooth:
@@ -312,7 +329,7 @@ class Huayu(GeoAttX):
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
             if up:
                 y_ = ps(y_)
-            y = norm.denorm(y_, fy_norm=False)[0]
+            y = imerg_norm.denorm(y_)[0]
             y[0][y[1] > y[2]] = 0
             y[0][y[0] < 0] = 0
             y = rearrange(y[0], '(b h) w -> b h w', b=1)
