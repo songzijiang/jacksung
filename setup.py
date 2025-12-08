@@ -18,7 +18,7 @@ version = '.'.join(version.split('.')[:-1]) + '.' + str(int(version.split('.')[-
 db.update({'version': version})
 db.close()
 setup(
-    name='jacksung_dev',
+    name='jacksung',
     version=version,
     author='Zijiang Song',
     long_description=open('README.md').read(),
