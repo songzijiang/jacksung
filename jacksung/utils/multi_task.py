@@ -66,14 +66,16 @@ class MultiTasks:
         self.task_list[k] = (function, args)
 
     def execute_task_nowait(self, save=False, print_log=False):
-        if print_log:
-            print('Now running tasks:', rf'{len(self.submitted)}/{len(self.task_list)}')
         for k, f_and_a in self.task_list.items():
+            count = 0
             if k not in self.submitted:
                 r = self.executor.submit(f_and_a[0], *f_and_a[1])
                 if save:
                     self.features[k] = r
                 self.submitted.append(k)
+                count += 1
+            if print_log:
+                print(f'Submitted tasks: {count}, Total submitted: {len(self.submitted)}/{len(self.task_list)}')
 
     def wrap_fun(self, fun, args):
         """包装函数，处理进度条更新"""
@@ -96,12 +98,16 @@ class MultiTasks:
         if self.pool_type == type_thread:
             # 线程池直接执行
             for k, f_and_a in self.task_list.items():
-                self.features[k] = self.executor.submit(self.wrap_fun, f_and_a[0], f_and_a[1])
+                if k not in self.submitted:
+                    self.features[k] = self.executor.submit(self.wrap_fun, f_and_a[0], f_and_a[1])
+                    self.submitted.append(k)
         else:
             # 进程池需要避免传递不可序列化对象
             for k, f_and_a in self.task_list.items():
-                # 直接提交函数，不包装进度条更新
-                self.features[k] = self.executor.submit(f_and_a[0], *f_and_a[1])
+                if k not in self.submitted:
+                    # 直接提交函数，不包装进度条更新
+                    self.features[k] = self.executor.submit(f_and_a[0], *f_and_a[1])
+                    self.submitted.append(k)
 
         # 收集结果并更新进度条
         for i, (k, feature) in enumerate(self.features.items()):
