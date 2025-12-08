@@ -8,9 +8,9 @@ from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, No
 import numpy as np
 from jacksung.utils.data_convert import np2tif
 from jacksung.utils.cache import Cache
-from jacksung.ai.utils.fy import prase_filename, getFY_coord_clip, getNPfromHDFClip
+from jacksung.ai.utils import fy, goes, metsat
 from einops import rearrange
-from jacksung.ai.utils.util import parse_config, data_to_device
+from jacksung.ai.utils.util import parse_config, data_to_device, clipSatelliteNP
 from jacksung.ai.GeoNet.m_network import GeoNet
 from jacksung.ai.GeoNet.m_networkV2 import GeoNet as GeoNetV2
 from jacksung.utils.exception import NoFileException, NanNPException
@@ -21,19 +21,6 @@ ABI = 'abi'
 SEVIRI = 'seviri'
 AHI = 'ahi'
 FCI = 'fci'
-
-
-def _get_np_array(fy_npy):
-    if type(fy_npy) is str:
-        print(f'正在反演:{fy_npy}...')
-        if not os.path.exists(fy_npy):
-            raise NoFileException(fy_npy)
-        n_data = np.load(fy_npy)
-    elif type(fy_npy) is np.ndarray:
-        n_data = fy_npy
-    else:
-        raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
-    return n_data
 
 
 class GeoAttX:
@@ -98,11 +85,11 @@ class GeoAttX_I(GeoAttX):
         self.cache = Cache(cache_size)
 
     def save(self, file_name, ys):
-        file_info = prase_filename(file_name)
+        file_info = fy.prase_filename(file_name)
         ld = int(file_info["position"])
         for idx, (k, y) in enumerate(ys.items()):
             # coord = getFY_coord_min(ld)
-            coord = getFY_coord_clip(self.area)
+            coord = fy.getFY_coord_clip(self.area)
             np2tif(y, save_path=self.root_path, out_name=f'{k.strftime("%Y%m%d_%H%M%S")}', coord=coord,
                    dtype=np.float32, print_log=False, dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
             td = k - file_info['start']
@@ -110,8 +97,9 @@ class GeoAttX_I(GeoAttX):
             target_filename = self.get_filename(file_name, mins)
             p_path = self.get_path_by_filename(target_filename)
             if idx >= 1 and os.path.exists(p_path):
-                coord = getFY_coord_clip(self.area)
-                p_data = getNPfromHDFClip(self.ld, p_path, area=self.area)
+                coord = fy.getFY_coord_clip(self.area)
+                p_data = fy.getNPfromHDF(p_path)
+                p_data = clipSatelliteNP(p_data, ld=self.ld, area=self.area)
                 if p_data is not None:
                     p_data = p_data[2:, :, :]
                     np2tif(p_data, save_path=self.root_path, out_name=f'target_{k.strftime("%Y%m%d_%H%M%S")}',
@@ -125,7 +113,7 @@ class GeoAttX_I(GeoAttX):
         return self.root_path
 
     def get_filename(self, file_name, mins):
-        file_info = prase_filename(file_name)
+        file_info = fy.prase_filename(file_name)
         new_file_name = file_name.replace(
             f'{file_info["start"].strftime("%Y%m%d%H%M%S")}_{file_info["end"].strftime("%Y%m%d%H%M%S")}',
             f'{(file_info["start"] + timedelta(minutes=mins)).strftime("%Y%m%d%H%M%S")}_'
@@ -133,7 +121,7 @@ class GeoAttX_I(GeoAttX):
         return new_file_name
 
     def get_path_by_filename(self, file_name):
-        file_info = prase_filename(file_name)
+        file_info = fy.prase_filename(file_name)
         return f'{self.data_path}{os.sep}downloaded_file{os.sep}{file_info["start"].year}{os.sep}{file_info["start"].month}{os.sep}{file_info["start"].day}{os.sep}{file_name}'
         # return f'{self.data_path}/{file_name}'
 
@@ -148,7 +136,8 @@ class GeoAttX_I(GeoAttX):
         f_path = self.get_path_by_filename(f_path)
         if not os.path.exists(f_path):
             raise NoFileException(f_path)
-        f_data = getNPfromHDFClip(self.ld, f_path, area=self.area, cache=self.cache, lock=self.lock)
+        f_data = fy.getNPfromHDF(f_path)
+        f_data = clipSatelliteNP(f_data, ld=self.ld, area=self.area)
         if type(f_data) is not str:
             f_data = f_data[2:, :, :]
         else:
@@ -169,7 +158,7 @@ class GeoAttX_I(GeoAttX):
 
     def predict(self, file_name, step=360, p_steps=(48, 12, 4, 1), print_log=True):
         try:
-            file_info = prase_filename(file_name)
+            file_info = fy.prase_filename(file_name)
             self.ld = int(file_info["position"])
             step = step // 15
             # if step > 24:
@@ -227,7 +216,7 @@ class GeoAttX_I(GeoAttX):
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
-                file_info = prase_filename(filename)
+                file_info = fy.prase_filename(filename)
                 f.write(f'{e.__class__}: {file_info["start"]} {e.file_name}\n')
             return {}
         return porcess_list
@@ -242,7 +231,7 @@ class GeoAttX_P(GeoAttX):
         self.model = self.load_model(model_path)
 
     def save(self, y, save_name, info_log=True, print_log=True):
-        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
+        np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['qpe']}])
         if print_log:
             print(f'data saved in {self.root_path}')
@@ -253,7 +242,15 @@ class GeoAttX_P(GeoAttX):
 
     def predict(self, fy_npy):
         try:
-            n_data = _get_np_array(fy_npy)
+            if type(fy_npy) is str:
+                print(f'正在反演:{fy_npy}...')
+                if not os.path.exists(fy_npy):
+                    raise NoFileException(fy_npy)
+                n_data = np.load(fy_npy)
+            elif type(fy_npy) is np.ndarray:
+                n_data = fy_npy
+            else:
+                raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
             n_data = torch.from_numpy(n_data)
             norm = PrecNormalization(self.args.prec_data_path)
             norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
@@ -268,7 +265,7 @@ class GeoAttX_P(GeoAttX):
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
-                file_info = prase_filename(filename)
+                file_info = fy.prase_filename(filename)
                 f.write(f'Not exist {file_info["start"]} {e.file_name}\n')
             return None
 
@@ -280,12 +277,15 @@ class Huayu(GeoAttX):
         if device is not None:
             self.device = device
         if self.args.sensor_type == AGRI:
+            self.sensor = AGRI
             self.satellite_num = 2
             self.satellite_channel = 7
         elif self.args.sensor_type == ABI:
+            self.sensor = ABI
             self.satellite_num = 3
             self.satellite_channel = 9
         elif self.args.sensor_type == SEVIRI:
+            self.sensor = SEVIRI
             self.satellite_num = 2
             self.satellite_channel = 7
         else:
@@ -293,7 +293,7 @@ class Huayu(GeoAttX):
         self.model = self.load_model(model_path, version=2, c_in=self.satellite_channel)
 
     def save(self, y, save_name, info_log=True, print_log=True):
-        np2tif(y, save_path=self.root_path, out_name=save_name, coord=getFY_coord_clip(self.area), dtype=np.float32,
+        np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
                print_log=False, dim_value=[{'value': ['imerg']}])
         if print_log:
             print(f'data saved in {self.root_path}')
@@ -302,10 +302,20 @@ class Huayu(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, satellite_npy, smooth=True, up=True):
+    def predict(self, satellite_file, npy_path=None, smooth=True, up=True, area=None, satellite_date=None):
         try:
-            n_data = _get_np_array(satellite_npy)
-            n_data = torch.from_numpy(n_data)
+            if npy_path is None:
+                if self.sensor == AGRI:
+                    n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
+                elif self.sensor == ABI:
+                    n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, return_coord=True)
+                elif self.sensor == SEVIRI:
+                    n_data, coord = metsat.getNPfromNAT(satellite_file, return_coord=True)
+                else:
+                    raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
+                n_data = clipSatelliteNP(n_data, coord.ld, self.area if area is None else area)
+            else:
+                n_data = np.load(npy_path)
             mean_std_npy = np.load(os.path.join(rf'{self.args.data_path}', 'mean_std.npy'))
             satellite_norm = Normalization(mean_std_npy, (0, self.satellite_channel))
             imerg_norm = Normalization(mean_std_npy,
@@ -336,13 +346,11 @@ class Huayu(GeoAttX):
             _, H, W = y.shape
             if smooth:
                 y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
-            # 生成的结果为mm/hhr， 转为15分钟累计降水（mm）
-            y /= 2
             return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
                 filename = e.file_name.split(os.sep)[-1]
-                file_info = prase_filename(filename)
+                file_info = fy.prase_filename(filename)
                 f.write(f'Not exist {file_info["start"]} {e.file_name}\n')
             return None
