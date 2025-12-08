@@ -16,6 +16,12 @@ from jacksung.ai.GeoNet.m_networkV2 import GeoNet as GeoNetV2
 from jacksung.utils.exception import NoFileException, NanNPException
 import torch.nn as nn
 
+AGRI = 'agri'
+ABI = 'abi'
+SEVIRI = 'seviri'
+AHI = 'ahi'
+FCI = 'fci'
+
 
 def _get_np_array(fy_npy):
     if type(fy_npy) is str:
@@ -269,7 +275,7 @@ class GeoAttX_P(GeoAttX):
 
 class Huayu(GeoAttX):
     def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10)),
-                 device=None):
+                 device=None, sensor=AGRI):
         super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
         if device is not None:
             self.device = device
