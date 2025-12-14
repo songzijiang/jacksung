@@ -153,6 +153,8 @@ def get_seviri_file_path(data_path, data_date):
     parent_dir = rf'{data_path}/{data_date.year}/{data_date.month}/{data_date.day}/'
     start_date_str = data_date.strftime('%Y%m%d%H%M%S')
     end_date_str = e_date.strftime('%Y%m%d%H%M%S')
+    if not os.path.exists(parent_dir):
+        return None
     for file in os.listdir(parent_dir):
         if file.endswith('.nat') and start_date_str <= file.split('-')[5].split('.')[0] <= end_date_str:
             return os.path.join(parent_dir, file)
