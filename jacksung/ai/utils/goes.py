@@ -112,6 +112,8 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, return_coord=False, only_coor
 def get_filename_by_date_from_dir(dir_path, date, satellite='G18'):
     file_lists = {}
     sub_dir = rf'{dir_path}/{date.year}/{date.month}/{date.day}'
+    if not os.path.exists(sub_dir):
+        return file_lists
     for file in os.listdir(sub_dir):
         if not file.endswith('.nc'):
             continue
