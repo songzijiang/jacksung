@@ -302,7 +302,7 @@ class Huayu(GeoAttX):
                 f.write(f'Imerg 反演：{save_name}\n')
         return self.root_path
 
-    def predict(self, satellite_file, npy_path=None, smooth=True, up=True, area=None, satellite_date=None):
+    def predict(self, npy_path=None, satellite_file=None, smooth=True, up=True, area=None, satellite_date=None):
         try:
             if npy_path is None:
                 if self.sensor == AGRI:
