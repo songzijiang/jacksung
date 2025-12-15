@@ -324,6 +324,7 @@ class Huayu(GeoAttX):
             satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std = \
                 data_to_device([satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std],
                                self.device, self.args.fp)
+            n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
             n = satellite_norm.norm(n_data)[:, :, :, :]
