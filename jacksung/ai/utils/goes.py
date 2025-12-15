@@ -111,7 +111,8 @@ def getSingleChannelNPfromHDF(hdf_path, lock=None, return_coord=False, only_coor
 
 def get_filename_by_date_from_dir(dir_path, date, satellite='G18'):
     file_lists = {}
-    for file in os.listdir(dir_path):
+    sub_dir = rf'{dir_path}/{date.year}/{date.month}/{date.day}'
+    for file in os.listdir(sub_dir):
         if not file.endswith('.nc'):
             continue
         splits = file.split('_')
@@ -130,11 +131,12 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False,
     coord = None
     data_channel_count = 0
     files = get_filename_by_date_from_dir(dir_path, date, satellite)
+    sub_dir = rf'{dir_path}/{date.year}/{date.month}/{date.day}'
     for channel, file in files.items():
         if infos is None:
-            infos = get_resample_infos(os.path.join(dir_path, file), lock=lock, cache=cache)
+            infos = get_resample_infos(os.path.join(sub_dir, file), lock=lock, cache=cache)
         channel_data, coord = getSingleChannelNPfromHDF(
-            os.path.join(dir_path, file), return_coord=True, resample_infos=infos)
+            os.path.join(sub_dir, file), return_coord=True, resample_infos=infos)
         if channel_data is None:
             raise Exception(f"文件{file}，通道 {channel} 数据获取失败")
         if np_data is None:
@@ -143,7 +145,7 @@ def getNPfromDir(dir_path, date, satellite='G18', lock=None, return_coord=False,
         data_channel_count += 1
     if data_channel_count < 9:
         raise Exception(
-            f"文件夹{dir_path}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
+            f"文件夹{sub_dir}中，卫星 {satellite} 在时间 {date} 的数据通道不完整，仅获取到 {data_channel_count} 个通道")
     if return_coord:
         return np_data, coord
     else:
