@@ -100,6 +100,7 @@ def _make_fig(file_np,
               # 字体大小
               font_size=15,
               # 放大区域
+              # [左侧像素坐标, 上方像素坐标, 放大区域宽度像素数, 放大区域高度像素数]
               zoom_rectangle=(310 * 5, 300 * 5, 50 * 5, 40 * 5),
               # 放大区域停靠位置
               zoom_docker=(300, 730),
@@ -216,7 +217,7 @@ def make_fig(data,
              colors=None,
              colors_only=None,
              font_size=15,
-             zoom_rectangle=None,
+             zoom_rectangle=(310 * 5, 300 * 5, 50 * 5, 40 * 5),
              zoom_docker=(300, 730),
              dpi=500,
              features=(
