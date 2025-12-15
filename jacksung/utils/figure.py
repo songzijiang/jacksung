@@ -74,7 +74,7 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=
     w = w - l_margin - r_margin
     for i in range(l_margin, w + l_margin):
         i = i - l_margin
-        colors_map[:h - 150, i + l_margin] = _get_color_position(i / w, colors)
+        colors_map[:h - font_size, i + l_margin] = _get_color_position(i / w, colors)
         if i in [0, w // 2, w - 1]:
             text_value = round((i / w) * (colors[-1][0] - colors[0][0]) + colors[0][0], round_digits)
             if round_digits == 0:
@@ -82,7 +82,7 @@ def make_color_map(colors, h, w, unit='', l_margin=300, r_margin=200, font_size=
             text = str(text_value)
             if i == 0:
                 text += unit
-            colors_map = draw_text(colors_map, (i - 100 + l_margin, h - 150),
+            colors_map = draw_text(colors_map, (i - 100 + l_margin, h - font_size),
                                    font=ImageFont.truetype(
                                        rf'{os.path.abspath(os.path.dirname(__file__))}/../libs/times.ttf', font_size),
                                    text=text)
