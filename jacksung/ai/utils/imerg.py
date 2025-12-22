@@ -95,14 +95,18 @@ class Downloader:
         print('Download completed!,times: %.2f秒' % (end - start))  # 输出下载用时时间
 
     def simulate(self, url, driver, path):
-        start = time.time()  # 下载开始时间
-        driver.get(url)
-        while not os.path.exists(path):
-            time.sleep(1)
-        # 3B-HHR-E.MS.MRG.3IMERG.20230101-S033000-E035959.0210.V07B.HDF5
         names = path.split('/')[-1].split('.')
         date = names[4].split('-')[0]
         move_path = path.replace('.'.join(names[:4]), f'{date}{os.path.sep}{".".join(names[:4])}')
+        if os.path.exists(move_path):
+            print(f'{move_path} already exists,skip download')
+            return
+        start = time.time()  # 下载开始时间
+        if not os.path.exists(path):
+            driver.get(url)
+        while not os.path.exists(path):
+            time.sleep(1)
+        # 3B-HHR-E.MS.MRG.3IMERG.20230101-S033000-E035959.0210.V07B.HDF5
         if not os.path.exists(os.path.dirname(move_path)):
             os.makedirs(os.path.dirname(move_path))
         shutil.move(path, move_path)
@@ -113,7 +117,7 @@ class Downloader:
         download_file_path = self.download_file_path
         print(f'开始下载:{download_file_path}')
         f = open(download_file_path, 'r')
-        save_f = open('downloaded.txt', 'r')
+        save_f = open('downloaded.txt', 'r+')
 
         downloaded_list = save_f.readlines()
         downloaded_list = [u.replace('\n', '') for u in downloaded_list if u.count('.pdf') == 0]
