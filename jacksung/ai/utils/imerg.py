@@ -10,10 +10,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import platform
+from jacksung.utils.log import oprint
 
 
 class Downloader:
-    def __init__(self, download_file_path, username,passwd,save_path=None):
+    def __init__(self, download_file_path, username, passwd, save_path=None):
         self.download_file_path = download_file_path
         if save_path is not None:
             self.save_path = save_path
@@ -22,8 +23,8 @@ class Downloader:
                 self.save_path = 'D:\\imerg'
             else:
                 self.save_path = '/mnt/data1/szj/imerg'
-        self.username=username
-        self.passwd=passwd
+        self.username = username
+        self.passwd = passwd
 
     def make_driver(self, url, is_headless=False, tmp_path=None, download_dir=None):
         options = webdriver.ChromeOptions()
@@ -115,7 +116,7 @@ class Downloader:
 
     def start_download(self):
         download_file_path = self.download_file_path
-        print(f'开始下载:{download_file_path}')
+        oprint(f'开始下载:{download_file_path}')
         f = open(download_file_path, 'r')
         if not os.path.exists('downloaded.txt'):
             open('downloaded.txt', 'w').close()
