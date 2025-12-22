@@ -117,6 +117,8 @@ class Downloader:
         download_file_path = self.download_file_path
         print(f'开始下载:{download_file_path}')
         f = open(download_file_path, 'r')
+        if not os.path.exists('downloaded.txt'):
+            open('downloaded.txt', 'w').close()
         save_f = open('downloaded.txt', 'r+')
 
         downloaded_list = save_f.readlines()
