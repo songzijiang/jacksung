@@ -137,7 +137,7 @@ class Downloader:
             for line in f.readlines():
                 url = line.strip()
                 if line.replace('\n', '') not in downloaded_list:
-                    print(url)
+                    oprint(url)
                     file_path = self.save_path + os.sep + url.split('/')[-1]
                     try:
                         self.simulate(url, driver, file_path)
