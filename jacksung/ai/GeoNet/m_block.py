@@ -1,3 +1,4 @@
+import os.path
 import random
 
 import torch
@@ -340,9 +341,9 @@ class LGAB(nn.Module):
         atn = atn.softmax(dim=-1)
         # 可视化注意力图
         print(atn[0].shape)
-        # rearrange(, '(kv head c) h w -> kv (b h) head w c', kv=2, head=self.num_heads)
-        # np2tif(atn[0].detach().cpu().numpy())
-
+        from jacksung.utils.data_convert import np2tif
+        if os.path.exists('./atn_visu') is False:
+            np2tif(rearrange(atn[0], 'head w w -> w w head', head=self.num_heads), './atn_visu', 'atn')
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
