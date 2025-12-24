@@ -312,6 +312,10 @@ class LGAB(nn.Module):
 
     def forward(self, x):
         b, c, h, w = x.shape
+        from jacksung.utils.data_convert import np2tif
+        from jacksung.ai.utils.fy import getFY_coord_clip
+        if os.path.exists('./x_atn_visu') is False:
+            np2tif(x[0].detach().cpu().numpy(), './x_atn_visu', 'x', coord=getFY_coord_clip())
         x_ = x
         x = self.project_inp(x_)
         xs = torch.split(x, self.split_chns, dim=1)
@@ -340,9 +344,8 @@ class LGAB(nn.Module):
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
         # 可视化注意力图
-        from jacksung.utils.data_convert import np2tif
-        if os.path.exists('./atn_visu') is False:
-            np2tif(atn[0].detach().cpu().numpy(), './atn_visu', 'atn')
+        if os.path.exists('./lon_atn_visu') is False:
+            np2tif(atn[0].detach().cpu().numpy(), './lon_atn_visu', 'lon_atn', coord=getFY_coord_clip())
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
@@ -352,6 +355,8 @@ class LGAB(nn.Module):
         atn = atn * logit_scale
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
+        if os.path.exists('./lat_atn_visu') is False:
+            np2tif(atn[0].detach().cpu().numpy(), './lat_atn_visu', 'lat_atn', coord=getFY_coord_clip())
         v = (atn @ v)
         y_ = rearrange(v, '(b w) head h c-> b (head c) h w', b=b)
         ys.append(y_)
