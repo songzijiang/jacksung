@@ -338,6 +338,11 @@ class LGAB(nn.Module):
         atn = atn * logit_scale
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
+        # 可视化注意力图
+        print(atn[0].shape)
+        # rearrange(, '(kv head c) h w -> kv (b h) head w c', kv=2, head=self.num_heads)
+        # np2tif(atn[0].detach().cpu().numpy())
+
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),

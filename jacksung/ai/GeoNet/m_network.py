@@ -60,8 +60,6 @@ class GeoNet(nn.Module):
         x_res = None
         for idx, stage in enumerate(self.body):
             if idx / self.downstage in [1]:
-                # 零时可视化model V1
-                np2tif(x.detach().cpu().numpy())
                 x_res = x
             x = stage(x)
             if (self.n_lgab + 1 - idx) / self.downstage in [1]:
