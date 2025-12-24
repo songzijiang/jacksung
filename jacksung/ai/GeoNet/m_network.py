@@ -44,12 +44,6 @@ class GeoNet(nn.Module):
         # self.tail = CubeUnEmbeding(self.c_lgan, 5 if self.task == 'prec' else self.c_in, self.down_sample)
 
     def forward(self, f, x, roll=0):
-        from jacksung.utils.data_convert import np2tif
-        from jacksung.ai.utils.fy import getFY_coord_clip
-        import os
-        if os.path.exists('./fx_atn_visu') is False:
-            np2tif(f[0].detach().cpu().numpy(), './x1_atn_visu', 'x1', coord=getFY_coord_clip())
-            np2tif(x[0].detach().cpu().numpy(), './x2_atn_visu', 'x2', coord=getFY_coord_clip())
         # head
         head_res = None
         if self.task == 'pred':
