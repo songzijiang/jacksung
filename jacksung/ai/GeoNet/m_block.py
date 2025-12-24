@@ -342,7 +342,8 @@ class LGAB(nn.Module):
         # 可视化注意力图
         from jacksung.utils.data_convert import np2tif
         if os.path.exists('./atn_visu') is False:
-            np2tif(rearrange(atn[0], 'head h w -> h w head', head=self.num_heads), './atn_visu', 'atn')
+            np2tif(rearrange(atn[0].detach().cpu().numpy(),
+                             'head h w -> h w head', head=self.num_heads), './atn_visu', 'atn')
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
