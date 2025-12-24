@@ -1,6 +1,7 @@
 import torch.nn as nn
 from jacksung.ai.GeoNet.m_block import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
 import torch
+from jacksung.utils.data_convert import np2tif
 
 
 class GeoNet(nn.Module):
@@ -59,6 +60,8 @@ class GeoNet(nn.Module):
         x_res = None
         for idx, stage in enumerate(self.body):
             if idx / self.downstage in [1]:
+                # 零时可视化model V1
+                np2tif(x.detach().cpu().numpy())
                 x_res = x
             x = stage(x)
             if (self.n_lgab + 1 - idx) / self.downstage in [1]:
