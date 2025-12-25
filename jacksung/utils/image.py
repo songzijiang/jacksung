@@ -6,6 +6,7 @@ import numpy as np
 from jacksung.utils.data_convert import Coordinate
 import os
 from importlib import resources
+from tqdm import tqdm
 
 
 def get_pixel_by_coord(img, coord, x, y):
@@ -212,10 +213,48 @@ def zoomAndDock(img, zoom_rectangle, docker, scale_factor=2, border=10):
     return img
 
 
+def draw_boundary(img, percent=95):
+    h, w = img.shape[:2]
+    gradient = np.zeros((h, w))
+    for i in range(4, h - 4):
+        for j in range(4, w - 4):
+            gradient[i, j] += abs(img[i + 1, j] - img[i - 1, j])
+            gradient[i, j] += abs(img[i + 2, j] - img[i - 2, j])
+            gradient[i, j] += abs(img[i + 3, j] - img[i - 3, j])
+            gradient[i, j] += abs(img[i + 4, j] - img[i - 4, j])
+            gradient[i, j] += abs(img[i, j + 1] - img[i, j - 1])
+            gradient[i, j] += abs(img[i, j + 2] - img[i, j - 2])
+            gradient[i, j] += abs(img[i, j + 3] - img[i, j - 3])
+            gradient[i, j] += abs(img[i, j + 4] - img[i, j - 4])
+
+    threshold = np.percentile(gradient, percent)
+    boundary_mask = gradient > threshold
+    return boundary_mask
+
+
 if __name__ == '__main__':
-    # path = r'D:\python_Project\FYpredict\metrics\make_figure\band_metrics.png'
-    # crop_png(path, right_margin=50)
-    white = make_block(200, 500, color=(random.randint(0, 255), 255, 255))
-    white = draw_text(white, (-1, 10), text='testtesttesttesttesttest text')
-    cv2.imshow('white', white)
-    cv2.waitKey()
+    img1 = np.array(Image.open(r'C:\Users\ECNU\Desktop\f_atn_visu\f-2.tif'))
+    img2 = np.array(Image.open(r'C:\Users\ECNU\Desktop\n_atn_visu\n-2.tif'))
+    img3 = np.array(Image.open(r'C:\Users\ECNU\Desktop\p_atn_visu\p-2.tif'))
+    # img1 = zoom_image(img1, 0.5)
+    # img2 = zoom_image(img2, 0.5)
+    # img3 = zoom_image(img3, 0.5)
+    threshold = 0.6
+    img1[img1 > threshold] = 1
+    img1[img1 <= threshold] = 0
+    img2[img2 > threshold] = 1
+    img2[img2 <= threshold] = 0
+    img3[img3 > threshold] = 1
+    img3[img3 <= threshold] = 0
+
+    boundary1 = draw_boundary(img1, 96)
+    boundary2 = draw_boundary(img2, 96)
+    boundary3 = draw_boundary(img3, 96)
+
+    img = np.zeros(img1.shape + (3,))
+    img[boundary1] = [255, 0, 0]
+    img[boundary2] = [0, 255, 0]
+    img[boundary3] = [0, 0, 255]
+    cv2.imshow('boundary', img.astype(np.uint8))
+    cv2.imwrite(rf'C:\Users\ECNU\Desktop\f_atn_visu\boundary.png', img.astype(np.uint8))
+    # cv2.waitKey()
