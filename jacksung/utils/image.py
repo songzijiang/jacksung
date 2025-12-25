@@ -236,6 +236,9 @@ if __name__ == '__main__':
     img1 = np.array(Image.open(r'C:\Users\ECNU\Desktop\f_atn_visu\f-2.tif'))
     img2 = np.array(Image.open(r'C:\Users\ECNU\Desktop\n_atn_visu\n-2.tif'))
     img3 = np.array(Image.open(r'C:\Users\ECNU\Desktop\p_atn_visu\p-2.tif'))
+
+    picImg = np.repeat(img2[:, :, np.newaxis], 3, axis=2)
+    picImg = (picImg - np.min(picImg)) / (np.max(picImg) - np.min(picImg)) * 255
     # img1 = zoom_image(img1, 0.25)
     # img2 = zoom_image(img2, 0.25)
     # img3 = zoom_image(img3, 0.25)
@@ -255,20 +258,29 @@ if __name__ == '__main__':
     img[boundary1] = [255, 0, 0]
     img[boundary2] = [0, 255, 0]
     img[boundary3] = [0, 0, 255]
-    img[700 - 5:700 + 5, 332 - 5:332 + 5, :] = [255, 255, 255]
-    img[700, :, :] = [255, 255, 255]
-    img[:, 332, :] = [255, 255, 255]
-    for i in range(4):
-        lon_att = np.array(Image.open(rf'C:\Users\ECNU\Desktop\lon_atn_visu\lon_atn-{i}.tif'))
-        lat_att = np.array(Image.open(rf'C:\Users\ECNU\Desktop\lat_atn_visu\lat_atn-{i}.tif'))
-        lon_att = zoom_image(lon_att, 4)[332]
-        lat_att = zoom_image(lat_att, 4)[700]
-        lon_att = (lon_att - np.min(lon_att)) / (np.percentile(lon_att, 90) - np.min(lon_att)) * 255
-        lat_att = (lat_att - np.min(lat_att)) / (np.percentile(lat_att, 90) - np.min(lat_att)) * 255
-        # att = np.zeros((200, 200))
-        img[700 - 2:700 + 2, :] = np.repeat(np.repeat(lon_att[np.newaxis, :, np.newaxis], 3, axis=2), 4, axis=0)
-        img[:, 332 - 2:332 + 2] = np.repeat(np.repeat(lat_att[:, np.newaxis, np.newaxis], 3, axis=2), 4, axis=1)
-        cv2.imwrite(rf'C:\Users\ECNU\Desktop\f_atn_visu\boundary{i}.png', zoom_image(img, 4).astype(np.uint8))
-
-        # cv2.imwrite(rf'C:\Users\ECNU\Desktop\f_atn_visu\att.png', att.astype(np.uint8))
-        # cv2.waitKey()
+    # img[700 - 5:700 + 5, 332 - 5:332 + 5, :] = [255, 255, 255]
+    # img[700, :, :] = [255, 255, 255]
+    # img[:, 332, :] = [255, 255, 255]
+    for head in range(4):
+        # for i in range(800):
+        #     img[i, i, :] = [0, 0, 255]
+        #     picImg[i, i, :] = [0, 0, 255]
+        for i in range(40, 799, 40):
+            j = i
+            lon_att = np.array(Image.open(rf'C:\Users\ECNU\Desktop\lon_atn_visu\lon_atn{i // 4}-{head}.tif'))
+            lat_att = np.array(Image.open(rf'C:\Users\ECNU\Desktop\lat_atn_visu\lat_atn{j // 4}-{head}.tif'))
+            lon_att = zoom_image(lon_att, 4)[j]
+            lat_att = zoom_image(lat_att, 4)[i]
+            lon_att = (lon_att - np.min(lon_att)) / (np.percentile(lon_att, 90) - np.min(lon_att)) * 255
+            lat_att = (lat_att - np.min(lat_att)) / (np.percentile(lat_att, 90) - np.min(lat_att)) * 255
+            # att = np.zeros((200, 200))
+            img[i - 1:i + 1, :] = np.repeat(np.repeat(lon_att[np.newaxis, :, np.newaxis], 3, axis=2), 2, axis=0)
+            img[:, j - 1:j + 1] = np.repeat(np.repeat(lat_att[:, np.newaxis, np.newaxis], 3, axis=2), 2, axis=1)
+            picImg[i - 1:i + 1, :] = np.repeat(np.repeat(lon_att[np.newaxis, :, np.newaxis], 3, axis=2), 2, axis=0)
+            picImg[:, j - 1:j + 1] = np.repeat(np.repeat(lat_att[:, np.newaxis, np.newaxis], 3, axis=2), 2, axis=1)
+            img[i - 3:i + 3, j - 3:j + 3, :] = [0, 0, 255]
+            picImg[i - 3:i + 3, j - 3:j + 3, :] = [0, 0, 255]
+        cv2.imwrite(rf'C:\Users\ECNU\Desktop\visual\boundary{head}.png', img.astype(np.uint8))
+        cv2.imwrite(rf'C:\Users\ECNU\Desktop\visual\img{head}.png', picImg.astype(np.uint8))
+    # cv2.imwrite(rf'C:\Users\ECNU\Desktop\f_atn_visu\att.png', att.astype(np.uint8))
+    # cv2.waitKey()
