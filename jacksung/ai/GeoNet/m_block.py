@@ -345,8 +345,9 @@ class LGAB(nn.Module):
         atn = atn.softmax(dim=-1)
         # 可视化注意力图
         if os.path.exists('./lon_atn_visu') is False:
-            np2tif(rearrange(atn, '(b h) head w1 w2-> b h head w1 w2', b=b)[0][int(h * 700 / 800)]
-                   .detach().cpu().numpy(), './lon_atn_visu', 'lon_atn', coord=getFY_coord_clip())
+            for i in range(0, h, 10):
+                np2tif(rearrange(atn, '(b h) head w1 w2-> b h head w1 w2', b=b)[0][i]
+                       .detach().cpu().numpy(), './lon_atn_visu', rf'lon_atn{i}')
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
@@ -358,8 +359,9 @@ class LGAB(nn.Module):
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
         if os.path.exists('./lat_atn_visu') is False:
-            np2tif(rearrange(atn, '(b w) head h1 h2-> b w head h1 h2', b=b)[0][int(w * 332 / 800)]
-                   .detach().cpu().numpy(), './lat_atn_visu', 'lat_atn', coord=getFY_coord_clip())
+            for i in range(0, w, 10):
+                np2tif(rearrange(atn, '(b w) head h1 h2-> b w head h1 h2', b=b)[0][i]
+                       .detach().cpu().numpy(), './lat_atn_visu', f'lat_atn{i}')
         v = (atn @ v)
         y_ = rearrange(v, '(b w) head h c-> b (head c) h w', b=b)
         ys.append(y_)
