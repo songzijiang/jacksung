@@ -346,7 +346,7 @@ class LGAB(nn.Module):
         # 可视化注意力图
         if os.path.exists('./lon_atn_visu') is False:
             np2tif(rearrange(atn, '(b h) head w1 w2-> b h head w1 w2', b=b)[0][int(h * 332 / 800)]
-                   .detach().cpu().numpy(), './lat_atn_visu', 'lat_atn', coord=getFY_coord_clip())
+                   .detach().cpu().numpy(), './lon_atn_visu', 'lat_atn', coord=getFY_coord_clip())
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
