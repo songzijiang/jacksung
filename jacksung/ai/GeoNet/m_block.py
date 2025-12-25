@@ -355,7 +355,6 @@ class LGAB(nn.Module):
                    rearrange(v, '(b h) head w c -> (b w) head h c', h=h))
         atn = (F.normalize(q, dim=-1) @ F.normalize(k, dim=-1).transpose(-2, -1))
         atn = atn * logit_scale
-
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
         if os.path.exists('./lat_atn_visu') is False:
