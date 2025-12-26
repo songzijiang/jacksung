@@ -1,7 +1,6 @@
 import torch.nn as nn
 from jacksung.ai.GeoNet.m_block import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
 import torch
-from jacksung.utils.data_convert import np2tif
 
 
 class GeoNet(nn.Module):
