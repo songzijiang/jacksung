@@ -10,10 +10,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import platform
+from jacksung.utils.log import oprint
 
 
 class Downloader:
-    def __init__(self, download_file_path, username,passwd,save_path=None):
+    def __init__(self, download_file_path, username, passwd, save_path=None):
         self.download_file_path = download_file_path
         if save_path is not None:
             self.save_path = save_path
@@ -22,8 +23,8 @@ class Downloader:
                 self.save_path = 'D:\\imerg'
             else:
                 self.save_path = '/mnt/data1/szj/imerg'
-        self.username=username
-        self.passwd=passwd
+        self.username = username
+        self.passwd = passwd
 
     def make_driver(self, url, is_headless=False, tmp_path=None, download_dir=None):
         options = webdriver.ChromeOptions()
@@ -95,14 +96,18 @@ class Downloader:
         print('Download completed!,times: %.2f秒' % (end - start))  # 输出下载用时时间
 
     def simulate(self, url, driver, path):
-        start = time.time()  # 下载开始时间
-        driver.get(url)
-        while not os.path.exists(path):
-            time.sleep(1)
-        # 3B-HHR-E.MS.MRG.3IMERG.20230101-S033000-E035959.0210.V07B.HDF5
         names = path.split('/')[-1].split('.')
         date = names[4].split('-')[0]
         move_path = path.replace('.'.join(names[:4]), f'{date}{os.path.sep}{".".join(names[:4])}')
+        if os.path.exists(move_path):
+            print(f'{move_path} already exists,skip download')
+            return
+        start = time.time()  # 下载开始时间
+        if not os.path.exists(path):
+            driver.get(url)
+        while not os.path.exists(path):
+            time.sleep(1)
+        # 3B-HHR-E.MS.MRG.3IMERG.20230101-S033000-E035959.0210.V07B.HDF5
         if not os.path.exists(os.path.dirname(move_path)):
             os.makedirs(os.path.dirname(move_path))
         shutil.move(path, move_path)
@@ -111,9 +116,11 @@ class Downloader:
 
     def start_download(self):
         download_file_path = self.download_file_path
-        print(f'开始下载:{download_file_path}')
+        oprint(f'开始下载:{download_file_path}')
         f = open(download_file_path, 'r')
-        save_f = open('downloaded.txt', 'r')
+        if not os.path.exists('downloaded.txt'):
+            open('downloaded.txt', 'w').close()
+        save_f = open('downloaded.txt', 'r+')
 
         downloaded_list = save_f.readlines()
         downloaded_list = [u.replace('\n', '') for u in downloaded_list if u.count('.pdf') == 0]
@@ -130,7 +137,7 @@ class Downloader:
             for line in f.readlines():
                 url = line.strip()
                 if line.replace('\n', '') not in downloaded_list:
-                    print(url)
+                    oprint(url)
                     file_path = self.save_path + os.sep + url.split('/')[-1]
                     try:
                         self.simulate(url, driver, file_path)

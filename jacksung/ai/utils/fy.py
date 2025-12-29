@@ -161,7 +161,10 @@ def getNPfromHDF(hdf_path, file_type='FDI', lock=None, cache=None, return_coord=
             else:
                 return n_data
     else:
-        return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock), coord
+        if return_coord:
+            return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock), coord
+        else:
+            return _getNPfromHDF(hdf_path, file_type=file_type, lock=lock)
 
 
 def _getNPfromHDF(hdf_path, file_type='FDI', lock=None):

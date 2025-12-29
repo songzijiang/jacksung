@@ -1,3 +1,4 @@
+import os.path
 import random
 
 import torch
@@ -309,8 +310,12 @@ class LGAB(nn.Module):
                        h=h // wsize, w=w // wsize, dh=wsize, dw=wsize, head=self.num_heads)
         return y_
 
-    def forward(self, x):
+    def forward(self, x, draw_attn=False):
         b, c, h, w = x.shape
+        from jacksung.utils.data_convert import np2tif
+        from jacksung.ai.utils.fy import getFY_coord_clip
+        if draw_attn:
+            np2tif(x[0].detach().cpu().numpy(), './x_atn_visu', 'x', coord=getFY_coord_clip())
         x_ = x
         x = self.project_inp(x_)
         xs = torch.split(x, self.split_chns, dim=1)
@@ -338,6 +343,11 @@ class LGAB(nn.Module):
         atn = atn * logit_scale
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
+        # 可视化注意力图
+        if draw_attn:
+            for i in range(0, h):
+                np2tif(rearrange(atn, '(b h) head w1 w2-> b h head w1 w2', b=b)[0][i]
+                       .detach().cpu().numpy(), './lon_atn_visu', rf'lon_atn{i}')
         v = (atn @ v)
         # for latitude
         q, k, v = (rearrange(q, '(b h) head w c -> (b w) head h c', h=h),
@@ -347,6 +357,10 @@ class LGAB(nn.Module):
         atn = atn * logit_scale
         # atn = (q @ k.transpose(-2, -1))
         atn = atn.softmax(dim=-1)
+        if draw_attn:
+            for i in range(0, w):
+                np2tif(rearrange(atn, '(b w) head h1 h2-> b w head h1 h2', b=b)[0][i]
+                       .detach().cpu().numpy(), './lat_atn_visu', f'lat_atn{i}')
         v = (atn @ v)
         y_ = rearrange(v, '(b w) head h c-> b (head c) h w', b=b)
         ys.append(y_)
@@ -370,11 +384,11 @@ class FEB(nn.Module):
         self.norm2 = Norm(inp_channels * 2)
         self.drop = nn.Dropout2d(0.2)
 
-    def forward(self, x):
+    def forward(self, x, draw_attn=False):
         res = x
         x = self.down(x)
         shortcut = x
-        x = self.LGAB(x)
+        x = self.LGAB(x, draw_attn)
         x = self.drop(x)
         x = self.norm1(x) + shortcut
         shortcut = x
