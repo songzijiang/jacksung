@@ -144,7 +144,7 @@ class GeoAttX_I(GeoAttX):
             raise NoFileException(f_path)
         f_data = fy.getNPfromHDF(f_path)
         if f_data is None:
-            raise NoFileException(f_path)
+            raise NanNPException(f_path)
         f_data = clipSatelliteNP(f_data, ld=self.ld, area=self.area)
         if type(f_data) is not str:
             f_data = f_data[2:, :, :]
