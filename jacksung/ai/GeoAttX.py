@@ -1,6 +1,6 @@
 import os.path
 import random
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
@@ -86,9 +86,13 @@ class GeoAttX_I(GeoAttX):
         self.ld = None
         self.cache = Cache(cache_size)
 
-    def save(self, file_name, ys):
+    def save(self, current_date, ys):
+        start_str = current_date.strftime("%Y%m%d%H%M%S")
+        end_str = (current_date + timedelta(minutes=14, seconds=59)).strftime("%Y%m%d%H%M%S")
+        file_name = rf'FY4B-_AGRI--_N_DISK_{105 if current_date > datetime(year=2023, month=3, day=1) else 133}' + \
+                    rf'0E_L1-_FDI-_MULT_NOM_{start_str}_{end_str}_4000M_V0001.HDF'
         file_info = fy.prase_filename(file_name)
-        ld = int(file_info["position"])
+
         for idx, (k, y) in enumerate(ys.items()):
             # coord = getFY_coord_min(ld)
             coord = fy.getFY_coord_clip(self.area)
@@ -158,8 +162,12 @@ class GeoAttX_I(GeoAttX):
         t_data = t_data * self.mean_std2Tensor(std, h, w) + self.mean_std2Tensor(mean, h, w)
         return t_data
 
-    def predict(self, file_name, step=360, p_steps=(48, 12, 4, 1), print_log=True):
+    def predict(self, current_date, step=360, p_steps=(48, 12, 4, 1), print_log=True):
         try:
+            start_str = current_date.strftime("%Y%m%d%H%M%S")
+            end_str = (current_date + timedelta(minutes=14, seconds=59)).strftime("%Y%m%d%H%M%S")
+            file_name = rf'FY4B-_AGRI--_N_DISK_{105 if current_date > datetime(year=2023, month=3, day=1) else 133}' + \
+                        rf'0E_L1-_FDI-_MULT_NOM_{start_str}_{end_str}_4000M_V0001.HDF'
             file_info = fy.prase_filename(file_name)
             self.ld = int(file_info["position"])
             step = step // 15
