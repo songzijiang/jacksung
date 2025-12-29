@@ -24,10 +24,12 @@ FCI = 'fci'
 
 
 class GeoAttX:
-    def __init__(self, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10)), lock=None):
+    def __init__(self, norm_path=None, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10)),
+                 lock=None):
         self.root_path = None
         self.timestamp = None
         self.dir_name = None
+        self.norm_path = norm_path
         self.device, self.args = parse_config(config)
         self.task_type = task_type
         self.set_root_path(root_path)
@@ -68,18 +70,18 @@ class GeoAttX:
 
 
 class GeoAttX_I(GeoAttX):
-    def __init__(self, data_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
+    def __init__(self, norm_path, x1_path, x4_path, x12_path, root_path=None, config='config_predict.yml',
                  area=((100, 140, 10), (20, 60, 10)), cache_size=1, lock=None, device=None):
-        super().__init__(config=config, root_path=root_path, task_type='pred', area=area, lock=lock)
+        super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='pred', area=area,
+                         lock=lock)
         if device is not None:
             self.device = device
         self.f, self.n, self.ys = None, None, None
-        self.data_path = data_path
         self.x1 = self.load_model(x1_path)
         self.x4 = self.load_model(x4_path)
         self.x12 = self.load_model(x12_path)
         # self.x48 = self.load_model(x48_path)
-        self.norm = PredNormalization(self.args.pred_data_path)
+        self.norm = PredNormalization(self.norm_path)
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)
         self.ld = None
         self.cache = Cache(cache_size)
@@ -122,7 +124,7 @@ class GeoAttX_I(GeoAttX):
 
     def get_path_by_filename(self, file_name):
         file_info = fy.prase_filename(file_name)
-        return f'{self.data_path}{os.sep}downloaded_file{os.sep}{file_info["start"].year}{os.sep}{file_info["start"].month}{os.sep}{file_info["start"].day}{os.sep}{file_name}'
+        return f'{self.args.pred_data_path}{os.sep}{file_info["start"].year}{os.sep}{file_info["start"].month}{os.sep}{file_info["start"].day}{os.sep}{file_name}'
         # return f'{self.data_path}/{file_name}'
 
     def numpy2tensor(self, f_data):
@@ -223,12 +225,17 @@ class GeoAttX_I(GeoAttX):
 
 
 class GeoAttX_P(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_qpe.yml', area=((100, 140, 10), (20, 60, 10)),
+    def __init__(self, norm_path=None, model_path=None, root_path=None, config='predict_qpe.yml',
+                 area=((100, 140, 10), (20, 60, 10)),
                  device=None):
-        super().__init__(config=config, root_path=root_path, task_type='prec', area=area)
+        super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prec', area=area)
         if device is not None:
             self.device = device
         self.model = self.load_model(model_path)
+        self.norm = PrecNormalization(self.norm_path)
+        self.norm.mean_fy, self.norm.mean_qpe, self.norm.std_fy, self.norm.std_qpe = \
+            data_to_device([self.norm.mean_fy, self.norm.mean_qpe, self.norm.std_fy, self.norm.std_qpe],
+                           self.device, self.args.fp)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
@@ -252,14 +259,11 @@ class GeoAttX_P(GeoAttX):
             else:
                 raise Exception('输入数据类型错误，仅支持文件路径或numpy数组')
             n_data = torch.from_numpy(n_data)
-            norm = PrecNormalization(self.args.prec_data_path)
-            norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe = \
-                data_to_device([norm.mean_fy, norm.mean_qpe, norm.std_fy, norm.std_qpe], self.device, self.args.fp)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b t c) h w -> b t c h w', b=1, t=1)
-            n = norm.norm(n_data, norm_type='fy')[:, 0, :, :, :]
+            n = self.norm.norm(n_data, norm_type='fy')[:, 0, :, :, :]
             y_ = self.model(n, n)
-            y = norm.denorm(y_, norm_type='qpe').detach().cpu().numpy()[0]
+            y = self.norm.denorm(y_, norm_type='qpe').detach().cpu().numpy()[0]
             return y
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
@@ -271,9 +275,9 @@ class GeoAttX_P(GeoAttX):
 
 
 class Huayu(GeoAttX):
-    def __init__(self, model_path, root_path=None, config='predict_imerg.yml', area=((100, 140, 10), (20, 60, 10)),
-                 device=None):
-        super().__init__(config=config, root_path=root_path, task_type='prem', area=area)
+    def __init__(self, norm_path=None, model_path=None, root_path=None, config='predict_imerg.yml',
+                 area=((100, 140, 10), (20, 60, 10)), device=None):
+        super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prem', area=area)
         if device is not None:
             self.device = device
         if self.args.sensor_type == AGRI:
@@ -290,7 +294,15 @@ class Huayu(GeoAttX):
             self.satellite_channel = 7
         else:
             raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
+        mean_std_npy = np.load(os.path.join(rf'{self.norm_path}', 'mean_std.npy'))
         self.model = self.load_model(model_path, version=2, c_in=self.satellite_channel)
+        self.satellite_norm = Normalization(mean_std_npy, (0, self.satellite_channel))
+        self.imerg_norm = Normalization(mean_std_npy, (self.satellite_channel * self.satellite_num,
+                                                       self.satellite_channel * self.satellite_num + 3))
+        self.satellite_norm.mean, self.satellite_norm.std, self.imerg_norm.mean, self.imerg_norm.std = \
+            data_to_device(
+                [self.satellite_norm.mean, self.satellite_norm.std, self.imerg_norm.mean, self.imerg_norm.std],
+                self.device, self.args.fp)
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
@@ -316,18 +328,10 @@ class Huayu(GeoAttX):
                 n_data = clipSatelliteNP(n_data, coord.ld, self.area if area is None else area)
             else:
                 n_data = np.load(npy_path)
-            mean_std_npy = np.load(os.path.join(rf'{self.args.data_path}', 'mean_std.npy'))
-            satellite_norm = Normalization(mean_std_npy, (0, self.satellite_channel))
-            imerg_norm = Normalization(mean_std_npy,
-                                       (self.satellite_channel * self.satellite_num,
-                                        self.satellite_channel * self.satellite_num + 3))
-            satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std = \
-                data_to_device([satellite_norm.mean, satellite_norm.std, imerg_norm.mean, imerg_norm.std],
-                               self.device, self.args.fp)
             n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
-            n = satellite_norm.norm(n_data)[:, :, :, :]
+            n = self.satellite_norm.norm(n_data)[:, :, :, :]
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
             if smooth:
@@ -340,7 +344,7 @@ class Huayu(GeoAttX):
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
             if up:
                 y_ = ps(y_)
-            y = imerg_norm.denorm(y_)[0]
+            y = self.imerg_norm.denorm(y_)[0]
             y[0][y[1] > y[2]] = 0
             y[0][y[0] < 0] = 0
             y = rearrange(y[0], '(b h) w -> b h w', b=1)
