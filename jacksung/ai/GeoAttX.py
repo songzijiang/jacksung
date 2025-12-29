@@ -86,7 +86,7 @@ class GeoAttX_I(GeoAttX):
         self.ld = None
         self.cache = Cache(cache_size)
 
-    def save(self, current_date, ys):
+    def save(self, current_date, ys, save_target=True):
         start_str = current_date.strftime("%Y%m%d%H%M%S")
         end_str = (current_date + timedelta(minutes=14, seconds=59)).strftime("%Y%m%d%H%M%S")
         file_name = rf'FY4B-_AGRI--_N_DISK_{105 if current_date > datetime(year=2023, month=3, day=1) else 133}' + \
@@ -102,7 +102,7 @@ class GeoAttX_I(GeoAttX):
             mins = td.days * 24 * 60 + td.seconds // 60
             target_filename = self.get_filename(file_name, mins)
             p_path = self.get_path_by_filename(target_filename)
-            if idx >= 1 and os.path.exists(p_path):
+            if idx >= 1 and os.path.exists(p_path) and save_target:
                 coord = fy.getFY_coord_clip(self.area)
                 p_data = fy.getNPfromHDF(p_path)
                 p_data = clipSatelliteNP(p_data, ld=self.ld, area=self.area)
