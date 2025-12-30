@@ -328,7 +328,7 @@ class Huayu(GeoAttX):
         try:
             if npy_path is None:
                 if self.sensor == AGRI:
-                    n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
+                    n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)[2:]
                 elif self.sensor == ABI:
                     n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, return_coord=True)
                 elif self.sensor == SEVIRI:
