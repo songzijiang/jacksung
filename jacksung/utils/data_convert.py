@@ -267,7 +267,55 @@ def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> fl
     return 6371 * c  # 地球平均半径≈6371km
 
 
+def fill_nan_with_window_mean(arr, window_size=(3, 3)):
+    """
+    用指定大小窗口的非NaN均值填充数组中的NaN
+    Args:
+        arr: 含NaN的二维numpy数组
+        window_size: 窗口大小，格式为 (height, width)，默认3x3
+    Returns:
+        filled_arr: 填充后的数组
+    """
+    arr = arr.copy()  # 避免修改原数组
+    h, w = arr.shape
+    win_h, win_w = window_size
+    # 窗口半径（用于确定邻域范围）
+    rh, rw = win_h // 2, win_w // 2
+
+    # 遍历每个元素
+    for i in range(h):
+        for j in range(w):
+            if np.isnan(arr[i, j]):
+                # 确定窗口的上下左右边界（防止越界）
+                top = max(0, i - rh)
+                bottom = min(h, i + rh + 1)
+                left = max(0, j - rw)
+                right = min(w, j + rw + 1)
+
+                # 提取窗口内的元素
+                window = arr[top:bottom, left:right]
+                # 计算窗口内非NaN的均值
+                window_mean = np.nanmean(window)
+
+                # 填充（如果窗口全是NaN，就用全局均值填充）
+                if not np.isnan(window_mean):
+                    arr[i, j] = window_mean
+                else:
+                    arr[i, j] = np.nanmean(arr)
+    return arr
+
+
 if __name__ == '__main__':
-    np_data, dim = nc2np(r'C:\Users\jackSung\Desktop\download.nc')
-    np2tif(np_data, 'com', dim_value=dim)
-    print(dim)
+    # 构造测试数组
+    test_arr = np.array([
+        [1, np.nan, 3],
+        [4, 5, np.nan],
+        [7, 8, 9]
+    ], dtype=np.float64)
+
+    # 用3x3窗口填充
+    filled_arr = fill_nan_with_window_mean(test_arr, window_size=(3, 3))
+    print("原数组：")
+    print(test_arr)
+    print("\n填充后数组：")
+    print(filled_arr)
