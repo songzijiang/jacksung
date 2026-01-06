@@ -285,7 +285,7 @@ class GeoAttX_P(GeoAttX):
 
 
 class Huayu(GeoAttX):
-    def __init__(self, norm_path=None, model_path=None, root_path=None, config='predict_imerg.yml',
+    def __init__(self, norm_path=None, model_path=None, root_path=None, config='config.yml',
                  area=((100, 140, 10), (20, 60, 10)), device=None):
         super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prem', area=area)
         if device is not None:
@@ -316,22 +316,24 @@ class Huayu(GeoAttX):
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
-               print_log=False, dim_value=[{'value': ['imerg']}])
+               print_log=False, dim_value=[{'value': [self.sensor]}])
         if print_log:
             print(f'data saved in {self.root_path}')
         if info_log:
             with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
-                f.write(f'Imerg 反演：{save_name}\n')
+                f.write(f'Huayu produced:{save_name}\n')
         return self.root_path
 
-    def predict(self, npy_path=None, satellite_file=None, smooth=True, up=True, area=None, satellite_date=None):
+    def predict(self, npy_path=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None,
+                satellite_date=None):
         try:
             if npy_path is None:
                 if self.sensor == AGRI:
                     n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
                     n_data = n_data[2:]
                 elif self.sensor == ABI:
-                    n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, return_coord=True)
+                    n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, satellite=satellite,
+                                                      return_coord=True)
                 elif self.sensor == SEVIRI:
                     n_data, coord = metsat.getNPfromNAT(satellite_file, return_coord=True)
                 else:
