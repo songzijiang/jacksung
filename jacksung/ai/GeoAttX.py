@@ -324,10 +324,11 @@ class Huayu(GeoAttX):
                 f.write(f'Huayu produced:{save_name}\n')
         return self.root_path
 
-    def predict(self, npy_path=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None, area_ij=None,
+    def predict(self, npy_path=None, np_data=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None,
+                area_ij=None,
                 satellite_date=None, fill_nan=False):
         try:
-            if npy_path is None:
+            if npy_path is None and np_data is None:
                 if self.sensor == AGRI:
                     n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
                     n_data = n_data[2:]
@@ -347,8 +348,10 @@ class Huayu(GeoAttX):
                         ((coord.ld + (area_ij[1][0] - 1200) * 0.05, coord.ld + (area_ij[1][1] - 1200) * 0.05, 10),
                          (60 - area_ij[0][1] * 0.05, 60 - area_ij[0][0] * 0.05, 10))
                 n_data = clipSatelliteNP(n_data, coord.ld, self.area)
-            else:
+            elif np_data is None:
                 n_data = np.load(npy_path)
+            else:
+                n_data = np_data
             n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
