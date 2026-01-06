@@ -324,7 +324,7 @@ class Huayu(GeoAttX):
                 f.write(f'Huayu produced:{save_name}\n')
         return self.root_path
 
-    def predict(self, npy_path=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None,
+    def predict(self, npy_path=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None, area_ij=None,
                 satellite_date=None):
         try:
             if npy_path is None:
@@ -338,7 +338,13 @@ class Huayu(GeoAttX):
                     n_data, coord = metsat.getNPfromNAT(satellite_file, return_coord=True)
                 else:
                     raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
-                n_data = clipSatelliteNP(n_data, coord.ld, self.area if area is None else area)
+                if area is not None:
+                    self.area = area
+                elif area_ij is not None:
+                    self.area = \
+                        ((coord.ld + (area_ij[1][0] - 1200) * 0.05, coord.ld + (area_ij[1][1] - 1200) * 0.05, 10),
+                         (60 - area_ij[0][1] * 0.05, 60 - area_ij[0][0] * 0.05, 10))
+                n_data = clipSatelliteNP(n_data, coord.ld, self.area)
             else:
                 n_data = np.load(npy_path)
             n_data = torch.from_numpy(n_data)
