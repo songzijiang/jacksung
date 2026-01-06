@@ -267,42 +267,91 @@ def haversine_distance(lon1: float, lat1: float, lon2: float, lat2: float) -> fl
     return 6371 * c  # 地球平均半径≈6371km
 
 
-def fill_nan_with_window_mean(arr, window_size=(3, 3)):
+def fill_nan_with_window_mean(arr, window_size=(3, 3), channel_last=False):
     """
-    用指定大小窗口的非NaN均值填充数组中的NaN
+    兼容二维/三维/四维数组的 NaN 窗口均值填充
     Args:
-        arr: 含NaN的二维numpy数组
-        window_size: 窗口大小，格式为 (height, width)，默认3x3
+        arr: 输入数组，支持 shape:
+             - 二维: (H, W)
+             - 三维: (C, H, W) 或 (H, W, C)（需指定 channel_last=True）
+             - 四维: (B, C, H, W) 或 (B, H, W, C)（需指定 channel_last=True）
+        window_size: 窗口大小 (win_h, win_w)，默认 3x3
+        channel_last: 若为 True，输入三维/四维数组的通道维度在最后一维，否则在第二维
     Returns:
-        filled_arr: 填充后的数组
+        filled_arr: 填充后的数组，shape 与输入完全一致
     """
-    arr = arr.copy()  # 避免修改原数组
-    h, w = arr.shape
+    arr = arr.copy()
+    orig_shape = arr.shape
+    orig_ndim = arr.ndim
     win_h, win_w = window_size
-    # 窗口半径（用于确定邻域范围）
-    rh, rw = win_h // 2, win_w // 2
+    rh, rw = win_h // 2, win_w // 2  # 窗口半径
 
-    # 遍历每个元素
-    for i in range(h):
-        for j in range(w):
-            if np.isnan(arr[i, j]):
-                # 确定窗口的上下左右边界（防止越界）
-                top = max(0, i - rh)
-                bottom = min(h, i + rh + 1)
-                left = max(0, j - rw)
-                right = min(w, j + rw + 1)
+    # ---------------------- 步骤1：统一转为四维 (B, C, H, W) ----------------------
+    if orig_ndim == 2:
+        # 二维 (H, W) → (B=1, C=1, H, W)
+        arr = arr[np.newaxis, np.newaxis, ...]
+    elif orig_ndim == 3:
+        if channel_last:
+            # 三维 (H, W, C) → (B=1, C, H, W)
+            arr = arr.transpose(2, 0, 1)[np.newaxis, ...]
+        else:
+            # 三维 (C, H, W) → (B=1, C, H, W)
+            arr = arr[np.newaxis, ...]
+    elif orig_ndim == 4:
+        if channel_last:
+            # 四维 (B, H, W, C) → (B, C, H, W)
+            arr = arr.transpose(0, 3, 1, 2)
+        # 否则已是 (B, C, H, W)，无需处理
+    else:
+        raise ValueError(f"不支持 {orig_ndim} 维数组，仅支持 2-4 维")
 
-                # 提取窗口内的元素
-                window = arr[top:bottom, left:right]
-                # 计算窗口内非NaN的均值
-                window_mean = np.nanmean(window)
+    B, C, H, W = arr.shape
 
-                # 填充（如果窗口全是NaN，就用全局均值填充）
-                if not np.isnan(window_mean):
-                    arr[i, j] = window_mean
-                else:
-                    arr[i, j] = np.nanmean(arr)
-    return arr
+    # ---------------------- 步骤2：遍历批量和通道，逐窗口填充 ----------------------
+    for b in range(B):
+        for c in range(C):
+            # 当前批量-通道的二维数据
+            mat = arr[b, c]
+            # 计算当前通道的全局非NaN均值（兜底用）
+            global_mean = np.nanmean(mat)
+
+            for i in range(H):
+                for j in range(W):
+                    if np.isnan(mat[i, j]):
+                        # 确定窗口边界，防止越界
+                        top = max(0, i - rh)
+                        bottom = min(H, i + rh + 1)
+                        left = max(0, j - rw)
+                        right = min(W, j + rw + 1)
+
+                        # 提取窗口内数据
+                        window = mat[top:bottom, left:right]
+                        window_mean = np.nanmean(window)
+
+                        # 填充逻辑
+                        if not np.isnan(window_mean):
+                            arr[b, c, i, j] = window_mean
+                        else:
+                            arr[b, c, i, j] = global_mean
+
+    # ---------------------- 步骤3：恢复为原始维度和形状 ----------------------
+    if orig_ndim == 2:
+        filled_arr = arr[0, 0]  # 去掉 B 和 C 维度
+    elif orig_ndim == 3:
+        if channel_last:
+            # (1, C, H, W) → (C, H, W) → (H, W, C)
+            filled_arr = arr[0].transpose(1, 2, 0)
+        else:
+            # (1, C, H, W) → (C, H, W)
+            filled_arr = arr[0]
+    elif orig_ndim == 4:
+        if channel_last:
+            # (B, C, H, W) → (B, H, W, C)
+            filled_arr = arr.transpose(0, 2, 3, 1)
+        else:
+            filled_arr = arr
+
+    return filled_arr
 
 
 if __name__ == '__main__':
