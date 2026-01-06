@@ -6,7 +6,7 @@ import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
 from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, Normalization
 import numpy as np
-from jacksung.utils.data_convert import np2tif
+from jacksung.utils.data_convert import np2tif, fill_nan_with_window_mean
 from jacksung.utils.cache import Cache
 from jacksung.ai.utils import fy, goes, metsat
 from einops import rearrange
@@ -325,7 +325,7 @@ class Huayu(GeoAttX):
         return self.root_path
 
     def predict(self, npy_path=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None, area_ij=None,
-                satellite_date=None):
+                satellite_date=None, fill_nan=False):
         try:
             if npy_path is None:
                 if self.sensor == AGRI:
@@ -338,6 +338,8 @@ class Huayu(GeoAttX):
                     n_data, coord = metsat.getNPfromNAT(satellite_file, return_coord=True)
                 else:
                     raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
+                if fill_nan:
+                    n_data = fill_nan_with_window_mean(n_data, window_size=(9, 9))
                 if area is not None:
                     self.area = area
                 elif area_ij is not None:
