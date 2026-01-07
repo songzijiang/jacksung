@@ -112,7 +112,7 @@ class GeoAttX_I(GeoAttX):
                            print_log=False, coord=coord, dtype=np.float32,
                            dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
         print(f'data saved in {self.root_path}')
-        with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+        with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
             f.write(f'输入数据：{file_info["start"]} {file_info["position"]} {file_info["end"]}\n')
             for k, y in ys.items():
                 f.write(f'预测：{k}\n')
@@ -253,7 +253,7 @@ class GeoAttX_P(GeoAttX):
         if print_log:
             print(f'data saved in {self.root_path}')
         if info_log:
-            with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+            with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
                 f.write(f'QPE 反演：{save_name}\n')
         return self.root_path
 
@@ -320,7 +320,7 @@ class Huayu(GeoAttX):
         if print_log:
             print(f'data saved in {self.root_path}')
         if info_log:
-            with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+            with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
                 f.write(f'Huayu produced:{save_name}\n')
         return self.root_path
 
