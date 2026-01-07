@@ -315,24 +315,26 @@ def fill_nan_with_window_mean(arr, window_size=(3, 3), channel_last=False):
             # 计算当前通道的全局非NaN均值（兜底用）
             global_mean = np.nanmean(mat)
 
-            for i in range(H):
-                for j in range(W):
-                    if np.isnan(mat[i, j]):
-                        # 确定窗口边界，防止越界
-                        top = max(0, i - rh)
-                        bottom = min(H, i + rh + 1)
-                        left = max(0, j - rw)
-                        right = min(W, j + rw + 1)
+            # 获取所有NaN的坐标
+            nan_coords = np.where(np.isnan(mat))
+            # 转换为(行, 列)的坐标对列表
+            result = list(zip(nan_coords[0], nan_coords[1]))
+            for i, j in result:
+                # 确定窗口边界，防止越界
+                top = max(0, i - rh)
+                bottom = min(H, i + rh + 1)
+                left = max(0, j - rw)
+                right = min(W, j + rw + 1)
 
-                        # 提取窗口内数据
-                        window = mat[top:bottom, left:right]
-                        window_mean = np.nanmean(window)
+                # 提取窗口内数据
+                window = mat[top:bottom, left:right]
+                window_mean = np.nanmean(window)
 
-                        # 填充逻辑
-                        if not np.isnan(window_mean):
-                            arr[b, c, i, j] = window_mean
-                        else:
-                            arr[b, c, i, j] = global_mean
+                # 填充逻辑
+                if not np.isnan(window_mean):
+                    arr[b, c, i, j] = window_mean
+                else:
+                    arr[b, c, i, j] = global_mean
 
     # ---------------------- 步骤3：恢复为原始维度和形状 ----------------------
     if orig_ndim == 2:
