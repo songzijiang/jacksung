@@ -6,7 +6,7 @@ import torch
 from jacksung.utils.time import RemainTime, Stopwatch, cur_timestamp_str
 from jacksung.ai.utils.norm_util import PredNormalization, PrecNormalization, Normalization
 import numpy as np
-from jacksung.utils.data_convert import np2tif
+from jacksung.utils.data_convert import np2tif, fill_nan_with_window_mean
 from jacksung.utils.cache import Cache
 from jacksung.ai.utils import fy, goes, metsat
 from einops import rearrange
@@ -112,7 +112,7 @@ class GeoAttX_I(GeoAttX):
                            print_log=False, coord=coord, dtype=np.float32,
                            dim_value=[{'value': [str(x) for x in list(range(9, 16))]}])
         print(f'data saved in {self.root_path}')
-        with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+        with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
             f.write(f'输入数据：{file_info["start"]} {file_info["position"]} {file_info["end"]}\n')
             for k, y in ys.items():
                 f.write(f'预测：{k}\n')
@@ -253,7 +253,7 @@ class GeoAttX_P(GeoAttX):
         if print_log:
             print(f'data saved in {self.root_path}')
         if info_log:
-            with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
+            with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
                 f.write(f'QPE 反演：{save_name}\n')
         return self.root_path
 
@@ -285,7 +285,7 @@ class GeoAttX_P(GeoAttX):
 
 
 class Huayu(GeoAttX):
-    def __init__(self, norm_path=None, model_path=None, root_path=None, config='predict_imerg.yml',
+    def __init__(self, norm_path=None, model_path=None, root_path=None, config='config.yml',
                  area=((100, 140, 10), (20, 60, 10)), device=None):
         super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prem', area=area)
         if device is not None:
@@ -316,29 +316,42 @@ class Huayu(GeoAttX):
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
-               print_log=False, dim_value=[{'value': ['imerg']}])
+               print_log=False, dim_value=[{'value': [self.sensor]}])
         if print_log:
             print(f'data saved in {self.root_path}')
         if info_log:
-            with open(os.path.join(self.root_path, 'info.log'), 'w') as f:
-                f.write(f'Imerg 反演：{save_name}\n')
+            with open(os.path.join(self.root_path, 'info.log'), 'a') as f:
+                f.write(f'Huayu produced:{save_name}\n')
         return self.root_path
 
-    def predict(self, npy_path=None, satellite_file=None, smooth=True, up=True, area=None, satellite_date=None):
+    def predict(self, npy_path=None, np_data=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None,
+                area_ij=None,
+                satellite_date=None, fill_nan=False):
         try:
-            if npy_path is None:
+            if npy_path is None and np_data is None:
                 if self.sensor == AGRI:
                     n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
                     n_data = n_data[2:]
                 elif self.sensor == ABI:
-                    n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, return_coord=True)
+                    n_data, coord = goes.getNPfromDir(satellite_file, satellite_date, satellite=satellite,
+                                                      return_coord=True)
                 elif self.sensor == SEVIRI:
                     n_data, coord = metsat.getNPfromNAT(satellite_file, return_coord=True)
                 else:
                     raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
-                n_data = clipSatelliteNP(n_data, coord.ld, self.area if area is None else area)
-            else:
+                if fill_nan:
+                    n_data = fill_nan_with_window_mean(n_data, window_size=(9, 9))
+                if area is not None:
+                    self.area = area
+                elif area_ij is not None:
+                    self.area = \
+                        ((coord.ld + (area_ij[1][0] - 1200) * 0.05, coord.ld + (area_ij[1][1] - 1200) * 0.05, 10),
+                         (60 - area_ij[0][1] * 0.05, 60 - area_ij[0][0] * 0.05, 10))
+                n_data = clipSatelliteNP(n_data, coord.ld, self.area)
+            elif np_data is None:
                 n_data = np.load(npy_path)
+            else:
+                n_data = np_data
             n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)

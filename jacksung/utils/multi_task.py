@@ -3,6 +3,7 @@ import threading
 import multiprocessing
 import time
 from tqdm import tqdm
+import traceback
 
 type_thread = 'type_thread'
 type_process = 'type_process'
@@ -79,7 +80,11 @@ class MultiTasks:
 
     def wrap_fun(self, fun, args):
         """包装函数，处理进度条更新"""
-        result = fun(*args)
+        try:
+            result = fun(*args)
+        except Exception as e:
+            traceback.print_exc()
+            result = e
         if self.progress_bar:
             # 使用适当的方式更新进度条
             if self.pool_type == type_thread:
