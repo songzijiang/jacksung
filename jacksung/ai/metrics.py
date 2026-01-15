@@ -123,8 +123,8 @@ class Metrics:
         preds_flat = preds.flatten(start_dim=1)  # 从第1维开始展平（保留样本维度）
         targets_flat = targets.flatten(start_dim=1)
         # 2. 二值化（1=有雨，0=无雨）
-        preds_binary = (preds_flat >= threshold).float()
-        targets_binary = (targets_flat >= threshold).float()
+        preds_binary = (preds_flat > threshold).float()
+        targets_binary = (targets_flat > threshold).float()
 
         # 3. 计算混淆矩阵元素（按样本维度求和）
         TP = torch.sum(preds_binary * targets_binary, dim=1)  # 每个样本的TP总和
