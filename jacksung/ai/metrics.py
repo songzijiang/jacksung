@@ -120,10 +120,8 @@ class Metrics:
             metrics: 包含每个样本指标的字典
         """
         # 1. 将每个样本的空间维度展平（[样本数, 高度, 宽度] → [样本数, 像素总数]）
-        print(preds.shape, targets.shape)
         preds_flat = preds.flatten(start_dim=1)  # 从第1维开始展平（保留样本维度）
         targets_flat = targets.flatten(start_dim=1)
-        print(preds_flat.shape, targets_flat.shape)
         # 2. 二值化（1=有雨，0=无雨）
         preds_binary = (preds_flat >= threshold).float()
         targets_binary = (targets_flat >= threshold).float()
