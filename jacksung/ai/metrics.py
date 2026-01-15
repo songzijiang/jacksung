@@ -93,6 +93,8 @@ class Metrics:
             count += 1
             p += self.p(pred, target)
         self.p.reset()
+        if count == 0:
+            return torch.nan
         return p / count
 
     def print_metrics(self, preds, targets, print_log=True):
