@@ -159,6 +159,12 @@ def parse_config(config=None, set_gpu=True):
         opt.update(yaml_args)
     if 'norm_type' not in opt:
         opt['norm_type'] = 'batch'
+    if 'resume' not in opt:
+        opt['resume'] = None
+    if 'model_path' not in opt:
+        opt['model_path'] = None
+    if 'pretrain' not in opt:
+        opt['pretrain'] = None
 
     if set_gpu:
         # set visible gpu
