@@ -157,6 +157,8 @@ def parse_config(config=None, set_gpu=True):
         opt = vars(args)
         yaml_args = yaml.load(open(config), Loader=yaml.FullLoader)
         opt.update(yaml_args)
+    if 'norm_type' not in opt:
+        opt['norm_type'] = 'batch'
 
     if set_gpu:
         # set visible gpu

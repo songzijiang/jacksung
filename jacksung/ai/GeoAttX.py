@@ -59,7 +59,8 @@ class GeoAttX:
         else:
             model = GeoNetV2(window_sizes=self.args.window_sizes, n_lgab=self.args.n_lgab, c_in=c_in,
                              c_lgan=self.args.c_lgan, r_expand=self.args.r_expand, down_sample=self.args.down_sample,
-                             num_heads=self.args.num_heads, downstage=self.args.downstage)
+                             num_heads=self.args.num_heads, downstage=self.args.downstage,
+                             norm_type=self.args.norm_type)
 
         ckpt = torch.load(path, map_location=torch.device(self.device))
         model.load(ckpt['model_state_dict'])

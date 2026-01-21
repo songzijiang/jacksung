@@ -1,12 +1,15 @@
 import torch.nn as nn
-from jacksung.ai.GeoNet.m_blockV2 import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
+from models.GeoNet.m_blockV2 import FEB, Tail, Head, DownBlock, UpBlock, CubeEmbeding, CubeUnEmbeding, Norm, ACT
 import torch
 import jacksung.utils.fastnumpy as fnp
 
 
 class GeoNet(nn.Module):
-    def __init__(self, window_sizes, n_lgab, c_in, c_lgan, r_expand=4, down_sample=2, num_heads=8, downstage=2):
+    def __init__(self, window_sizes, n_lgab, c_in, c_lgan, r_expand=4, down_sample=2, num_heads=8, downstage=2,
+                 norm_type='batch'):
         super(GeoNet, self).__init__()
+        print(rf'Initial model by :{norm_type}Norm!')
+        self.norm_type = norm_type
         self.window_sizes = window_sizes
         self.n_lgab = n_lgab
         self.c_in = c_in
@@ -14,32 +17,32 @@ class GeoNet(nn.Module):
         self.r_expand = r_expand
         self.down_sample = down_sample
         # define head module
-        self.head = Head(self.c_lgan, self.c_in, self.down_sample)
+        self.head = Head(self.c_lgan, self.c_in, self.down_sample, norm_type=self.norm_type)
         # define body module
         self.body = nn.ModuleList()
         self.downstage = downstage
         for i in range(self.n_lgab):
             if i % self.downstage in [1]:
                 if 0 <= i < self.n_lgab / 2 - 1:
-                    self.body.append(DownBlock(self.c_lgan, 2))
+                    self.body.append(DownBlock(self.c_lgan, 2, norm_type=self.norm_type))
                     self.c_lgan = self.c_lgan * 2
                 elif i > self.n_lgab / 2 + 1:
-                    self.body.append(UpBlock(self.c_lgan // 2, 2))
+                    self.body.append(UpBlock(self.c_lgan // 2, 2, norm_type=self.norm_type))
                     self.c_lgan = self.c_lgan // 2
             self.body.append(
-                FEB(self.c_lgan, self.r_expand, self.window_sizes[i % len(self.window_sizes)], num_heads=num_heads))
-        self.tail = Tail(self.c_lgan, 3, down_sample)
+                FEB(self.c_lgan, self.r_expand, self.window_sizes[i % len(self.window_sizes)], num_heads=num_heads,
+                    norm_type=self.norm_type))
+        self.tail = Tail(self.c_lgan, 3, down_sample, norm_type=self.norm_type)
 
     def forward(self, x, roll=0):
         # head
-
         x = torch.roll(x, shifts=roll, dims=-1)
         x = self.head(x)
         x_res = list()
         x_res.append(x)
         idx = 0
         for stage in self.body:
-            if str(stage.__class__) == "<class 'jacksung.ai.GeoNet.m_blockV2.FEB'>":
+            if str(stage.__class__) == "<class 'models.GeoNet.m_blockV2.FEB'>":
                 # 7,9
                 if idx > self.n_lgab / 2 + 1 and idx % self.downstage in [1]:
                     x += x_res.pop()
@@ -82,6 +85,8 @@ class GeoNet(nn.Module):
                     else:
                         raise Exception(err_log)
             elif strict:
+                if name.count("running_mean") + name.count("running_var") + name.count("num_batches_tracked") > 0:
+                    continue
                 raise KeyError(f'unexpected key {name} in {own_state.keys()}')
             else:
                 print(f'{name} not loaded by model')

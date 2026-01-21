@@ -91,10 +91,10 @@ class ACT(nn.Module):
 
 
 class DownBlock(nn.Module):
-    def __init__(self, c_lgan, downscale=2):
+    def __init__(self, c_lgan, downscale=2, norm_type='batch'):
         super(DownBlock, self).__init__()
         self.down = nn.Conv2d(c_lgan, c_lgan * downscale, kernel_size=downscale, stride=downscale)
-        self.norm = Norm(c_lgan * downscale)
+        self.norm = Norm(c_lgan * downscale, norm_type=norm_type)
         self.act = ACT()
         self.conv = nn.Conv2d(c_lgan * downscale, c_lgan * downscale, kernel_size=3, stride=1, padding=1)
 
@@ -107,10 +107,10 @@ class DownBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    def __init__(self, c_lgan, downscale=2):
+    def __init__(self, c_lgan, downscale=2, norm_type='batch'):
         super(UpBlock, self).__init__()
         self.conv = nn.Conv2d(c_lgan * downscale, c_lgan * downscale, kernel_size=3, stride=1, padding=1)
-        self.norm = Norm(c_lgan * downscale)
+        self.norm = Norm(c_lgan * downscale, norm_type=norm_type)
         self.act = ACT()
         self.up = nn.ConvTranspose2d(c_lgan * downscale, c_lgan, kernel_size=downscale, stride=downscale)
 
@@ -123,10 +123,16 @@ class UpBlock(nn.Module):
 
 
 class Norm(nn.Module):
-    def __init__(self, c_in):
+    def __init__(self, c_in, norm_type='batch'):
         super(Norm, self).__init__()
-        self.norm = nn.BatchNorm2d(c_in)
-        # self.norm = nn.GroupNorm(1, c_in, eps=1e-6, affine=True)
+        if norm_type == 'batch':
+            self.norm = nn.BatchNorm2d(c_in)
+        elif norm_type == 'group':
+            self.norm = nn.GroupNorm(9, c_in, eps=1e-6, affine=True)
+        elif norm_type == 'instance':
+            self.norm = nn.InstanceNorm2d(c_in, affine=True)
+        else:
+            raise ValueError(rf'invalid norm type {norm_type}')
 
     def forward(self, x):
         x = self.norm(x)
@@ -145,11 +151,11 @@ class Norm(nn.Module):
 
 
 class CubeEmbeding(nn.Module):
-    def __init__(self, c_lgan, c_in, down_sample=1):
+    def __init__(self, c_lgan, c_in, down_sample=1, norm_type='batch'):
         super(CubeEmbeding, self).__init__()
         self.embeding = nn.Conv3d(c_in, c_lgan, kernel_size=(2, down_sample, down_sample),
                                   stride=(2, down_sample, down_sample), padding=(0, 0, 0))
-        self.norm = Norm(c_lgan)
+        self.norm = Norm(c_lgan, norm_type=norm_type)
         self.act = ACT()
         self.conv2 = ShiftConv2d(c_lgan, c_lgan)
 
@@ -162,10 +168,10 @@ class CubeEmbeding(nn.Module):
 
 
 class CubeUnEmbeding(nn.Module):
-    def __init__(self, c_lgan, c_in, downscale=2):
+    def __init__(self, c_lgan, c_in, downscale=2, norm_type='batch'):
         super(CubeUnEmbeding, self).__init__()
         self.conv1 = nn.Conv2d(c_lgan, c_lgan, kernel_size=3, stride=1, padding=1)
-        self.norm = Norm(c_lgan)
+        self.norm = Norm(c_lgan, norm_type=norm_type)
         self.act = ACT()
         self.up = nn.ConvTranspose2d(c_lgan, c_lgan, kernel_size=downscale, stride=downscale)
         self.conv2 = nn.Conv2d(c_lgan, c_in, kernel_size=3, stride=1, padding=1)
@@ -180,17 +186,16 @@ class CubeUnEmbeding(nn.Module):
 
 
 class Head(nn.Module):
-    def __init__(self, c_lgan, c_in, down_sample):
+    def __init__(self, c_lgan, c_in, down_sample, norm_type='batch'):
         super(Head, self).__init__()
         self.stage = nn.ModuleList()
         while down_sample >= 2:
             self.stage.append(
                 ShiftConv2d(c_in, c_in * 2, stride=2))
             c_in *= 2
-            self.stage.append(Norm(c_in))
+            self.stage.append(Norm(c_in, norm_type=norm_type))
             self.stage.append(ACT())
             down_sample = down_sample // 2
-
         self.conv2 = ShiftConv2d(c_in, c_lgan)
 
     def forward(self, x):
@@ -202,12 +207,12 @@ class Head(nn.Module):
 
 
 class Tail(nn.Module):
-    def __init__(self, c_lgan, c_in, down_sample):
+    def __init__(self, c_lgan, c_in, down_sample, norm_type='batch'):
         super(Tail, self).__init__()
         self.down_sample = down_sample
         self.conv1 = nn.Conv2d(c_lgan, c_lgan, kernel_size=3, stride=1, padding=1)
         # self.norm = nn.BatchNorm2d(c_in * down_sample * down_sample)
-        self.norm = Norm(c_lgan)
+        self.norm = Norm(c_lgan, norm_type=norm_type)
         self.act = ACT()
         if self.down_sample == 1:
             self.conv2 = nn.Conv2d(c_lgan, c_in, kernel_size=3,
@@ -406,17 +411,17 @@ class LGAB(nn.Module):
 
 
 class FEB(nn.Module):
-    def __init__(self, inp_channels, exp_ratio=2, window_size=5, num_heads=8):
+    def __init__(self, inp_channels, exp_ratio=2, window_size=5, num_heads=8, norm_type='batch'):
         super(FEB, self).__init__()
         self.exp_ratio = exp_ratio
         self.inp_channels = inp_channels
-        self.down = DownBlock(inp_channels, downscale=2)
-        self.up = UpBlock(inp_channels, downscale=2)
+        self.down = DownBlock(inp_channels, downscale=2, norm_type=norm_type)
+        self.up = UpBlock(inp_channels, downscale=2, norm_type=norm_type)
 
         self.FD = FD(inp_channels=inp_channels * 2, out_channels=inp_channels * 2, exp_ratio=exp_ratio)
         self.LGAB = LGAB(channels=inp_channels * 2, window_size=window_size, num_heads=num_heads)
-        self.norm1 = Norm(inp_channels * 2)
-        self.norm2 = Norm(inp_channels * 2)
+        self.norm1 = Norm(inp_channels * 2, norm_type=norm_type)
+        self.norm2 = Norm(inp_channels * 2, norm_type=norm_type)
         self.drop = nn.Dropout2d(0.2)
 
     def forward(self, x):
@@ -424,7 +429,7 @@ class FEB(nn.Module):
         x = self.down(x)
         shortcut = x
         x = self.LGAB(x)
-        x = self.drop(x)
+        # x = self.drop(x)
         x = self.norm1(x) + shortcut
         shortcut = x
         x = self.FD(x)
