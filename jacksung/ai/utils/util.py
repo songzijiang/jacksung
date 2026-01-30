@@ -157,6 +157,8 @@ def parse_config(config=None, set_gpu=True):
     else:
         yaml_args = yaml.load(open(config), Loader=yaml.FullLoader)
     opt.update(yaml_args)
+    if 'mean_std_path' not in opt:
+        opt['mean_std_path'] = None
     if 'norm_type' not in opt:
         opt['norm_type'] = 'batch'
     if 'resume' not in opt:
@@ -165,6 +167,8 @@ def parse_config(config=None, set_gpu=True):
         opt['model_path'] = None
     if 'pretrain' not in opt:
         opt['pretrain'] = None
+    if 'model_path' not in opt:
+        opt['model_path'] = None
 
     if set_gpu:
         # set visible gpu
