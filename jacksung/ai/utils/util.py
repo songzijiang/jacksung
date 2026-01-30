@@ -147,16 +147,16 @@ def save_model(_path, _epoch, _model, _optimizer, _scheduler, _stat_dict):
 def parse_config(config=None, set_gpu=True):
     parser = argparse.ArgumentParser(description='config')
     parser.add_argument('--config', type=str, default=None, help='pre-config file for training')
-    parser.add_argument('--prec_data_path', type=str, default=None, help='dataset path')
+    parser.add_argument('--test_path', type=str, default=None, help='test path')
     args = parser.parse_args()
+    opt = vars(args)
     if args.config:
-        opt = vars(args)
         yaml_args = yaml.load(open(args.config), Loader=yaml.FullLoader)
-        opt.update(yaml_args)
+    elif args.test_path:
+        yaml_args = yaml.load(open(os.path.join(args.test_path, 'config_saved.yml')), Loader=yaml.FullLoader)
     else:
-        opt = vars(args)
         yaml_args = yaml.load(open(config), Loader=yaml.FullLoader)
-        opt.update(yaml_args)
+    opt.update(yaml_args)
     if 'norm_type' not in opt:
         opt['norm_type'] = 'batch'
     if 'resume' not in opt:
