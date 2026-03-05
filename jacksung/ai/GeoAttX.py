@@ -317,7 +317,7 @@ class Huayu(GeoAttX):
                 [self.satellite_norm.mean, self.satellite_norm.std, self.imerg_norm.mean, self.imerg_norm.std],
                 self.device, self.args.fp)
         if self.print_timelog:
-            print(st.reset())
+            print('load model:', st.reset())
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
@@ -371,10 +371,10 @@ class Huayu(GeoAttX):
             if not up:
                 n = n.mean(dim=0, keepdim=True)
             if self.print_timelog:
-                print(st.reset())
+                print('preparing data:', st.reset())
             y_ = self.model(n)
             if self.print_timelog:
-                print(st.reset())
+                print('inference:', st.reset())
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
             if up:
                 y_ = ps(y_)
@@ -386,7 +386,7 @@ class Huayu(GeoAttX):
             if smooth:
                 y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
             if self.print_timelog:
-                print(st.reset())
+                print('post process:', st.reset())
             return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
