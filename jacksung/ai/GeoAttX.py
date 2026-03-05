@@ -25,10 +25,11 @@ FCI = 'fci'
 
 class GeoAttX:
     def __init__(self, norm_path=None, config=None, root_path=None, task_type=None, area=((100, 140, 10), (20, 60, 10)),
-                 lock=None):
+                 lock=None, print_timelog=False):
         self.root_path = None
         self.timestamp = None
         self.dir_name = None
+        self.print_timelog = print_timelog
         self.norm_path = norm_path
         self.device, self.args = parse_config(config)
         self.task_type = task_type
@@ -286,8 +287,9 @@ class GeoAttX_P(GeoAttX):
 
 class Huayu(GeoAttX):
     def __init__(self, norm_path=None, model_path=None, root_path=None, config='config.yml',
-                 area=((100, 140, 10), (20, 60, 10)), device=None):
-        super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prem', area=area)
+                 area=((100, 140, 10), (20, 60, 10)), device=None, print_timelog=False):
+        super().__init__(norm_path=norm_path, config=config, root_path=root_path, task_type='prem', area=area,
+                         print_timelog=print_timelog)
         if device is not None:
             self.device = device
         if self.args.sensor_type == AGRI:
@@ -304,6 +306,7 @@ class Huayu(GeoAttX):
             self.satellite_channel = 7
         else:
             raise ValueError(f'Unknown sensor type{self.args.sensor_type}')
+        st = Stopwatch()
         mean_std_npy = np.load(os.path.join(rf'{self.norm_path}', 'mean_std.npy'))
         self.model = self.load_model(model_path, version=2, c_in=self.satellite_channel)
         self.satellite_norm = Normalization(mean_std_npy, (0, self.satellite_channel))
@@ -313,6 +316,8 @@ class Huayu(GeoAttX):
             data_to_device(
                 [self.satellite_norm.mean, self.satellite_norm.std, self.imerg_norm.mean, self.imerg_norm.std],
                 self.device, self.args.fp)
+        if self.print_timelog:
+            print(st.reset())
 
     def save(self, y, save_name, info_log=True, print_log=True):
         np2tif(y, save_path=self.root_path, out_name=save_name, coord=fy.getFY_coord_clip(self.area), dtype=np.float32,
@@ -328,6 +333,7 @@ class Huayu(GeoAttX):
                 area_ij=None,
                 satellite_date=None, fill_nan=False):
         try:
+            st = Stopwatch()
             if npy_path is None and np_data is None:
                 if self.sensor == AGRI:
                     n_data, coord = fy.getNPfromHDF(satellite_file, return_coord=True)
@@ -364,7 +370,11 @@ class Huayu(GeoAttX):
             n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
             if not up:
                 n = n.mean(dim=0, keepdim=True)
+            if self.print_timelog:
+                print(st.reset())
             y_ = self.model(n)
+            if self.print_timelog:
+                print(st.reset())
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
             if up:
                 y_ = ps(y_)
@@ -375,6 +385,8 @@ class Huayu(GeoAttX):
             _, H, W = y.shape
             if smooth:
                 y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
+            if self.print_timelog:
+                print(st.reset())
             return y.detach().cpu().numpy()
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
