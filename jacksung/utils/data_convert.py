@@ -313,7 +313,7 @@ def fill_nan_with_window_mean(arr, window_size=(3, 3), channel_last=False):
             # 当前批量-通道的二维数据
             mat = arr[b, c]
             # 计算当前通道的全局非NaN均值（兜底用）
-            global_mean = np.nanmean(mat)
+            # global_mean = np.nanmean(mat)
 
             # 获取所有NaN的坐标
             nan_coords = np.where(np.isnan(mat))
@@ -334,7 +334,7 @@ def fill_nan_with_window_mean(arr, window_size=(3, 3), channel_last=False):
                 if not np.isnan(window_mean):
                     arr[b, c, i, j] = window_mean
                 else:
-                    arr[b, c, i, j] = global_mean
+                    arr[b, c, i, j] = np.nan
 
     # ---------------------- 步骤3：恢复为原始维度和形状 ----------------------
     if orig_ndim == 2:
