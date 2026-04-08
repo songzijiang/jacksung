@@ -16,6 +16,7 @@ import cv2
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.metrics import r2_score
+from tqdm import tqdm
 
 
 def uncertainty_bootstrap(obs, sim, metric_func, n_boot=1000, threshold=0.1):
@@ -40,7 +41,7 @@ def uncertainty_bootstrap(obs, sim, metric_func, n_boot=1000, threshold=0.1):
     sim = np.array(sim)
     n = len(obs)
     results = []
-    for _ in range(n_boot):
+    for _ in tqdm(range(n_boot)):
         # 有放回抽样
         idx = np.random.randint(0, n, n)
         obs_sample = obs[idx]
