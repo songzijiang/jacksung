@@ -13,6 +13,115 @@ import importlib
 from einops import rearrange
 import cv2
 
+import numpy as np
+from scipy.stats import pearsonr
+from sklearn.metrics import r2_score
+
+
+def uncertainty_bootstrap(obs, sim, metric_func, n_boot=1000, threshold=0.1):
+    """
+    标准Bootstrap（每次抽n个样本）
+    Parameters
+    ----------
+    obs : array-like
+        观测值
+    sim : array-like
+        模拟值
+    metric_func : function
+        指标计算函数（如calculate_metrics）
+    n_boot : int
+        bootstrap次数
+    Returns
+    -------
+    dict
+        各指标的 mean / std / 95% CI
+    """
+    obs = np.array(obs)
+    sim = np.array(sim)
+    n = len(obs)
+    results = []
+    for _ in range(n_boot):
+        # 有放回抽样
+        idx = np.random.randint(0, n, n)
+        obs_sample = obs[idx]
+        sim_sample = sim[idx]
+        metrics = metric_func(obs_sample, sim_sample, threshold)
+        results.append(metrics)
+    # 转为dict of lists
+    metric_names = results[0].keys()
+    stats = {}
+    for m in metric_names:
+        values = np.array([r[m] for r in results])
+        ci_low = np.percentile(values, 2.5)
+        ci_high = np.percentile(values, 97.5)
+        stats[m] = rf"{round((ci_low + ci_high) / 2, 3)}±{round((ci_high - ci_low) / 2, 3)}"
+    return stats
+
+
+def precipitation_metrics(obs_data, sim_data, threshold=0.1, interval_min=-1, interval_max=1000, digits=4):
+    """
+    计算降水评估指标：CSI, FAR, POD, ACC, CC, R², RMSE
+    Parameters:
+    -----------
+    obs_data : list or np.array
+        观测值序列（station数据）
+    sim_data : list or np.array
+        模拟值序列（栅格数据，如HHR、cmorph等）
+    threshold : float
+        降水阈值，默认0.1mm，大于等于阈值视为有雨
+    Returns:
+    --------
+    dict
+        包含各指标计算结果的字典
+    """
+    if len(obs_data) != len(sim_data):
+        raise ValueError(rf"观测值和模拟值长度不一致,{len(obs_data)} vs {len(sim_data)}")
+    # 转换为numpy数组，方便计算
+    obs = np.array(obs_data, dtype=float)
+    sim = np.array(sim_data, dtype=float)
+    obs[obs < 0] = np.nan
+    sim[sim < 0] = np.nan
+    obs[obs > 1000] = np.nan
+    sim[sim > 1000] = np.nan
+    # 分区间过滤
+    obs[obs <= interval_min] = np.nan
+    obs[obs > interval_max] = np.nan
+    # 过滤掉NaN和None值（无效数据）
+    valid_mask = ~(np.isnan(obs) | np.isnan(sim) | np.isinf(obs) | np.isinf(sim))
+    obs_valid = obs[valid_mask]
+    sim_valid = sim[valid_mask]
+    if len(obs_valid) < 10:
+        return {
+            'CSI': np.nan, 'FAR': np.nan, 'POD': np.nan,
+            'ACC': np.nan, 'CC': np.nan, 'R2': np.nan, 'RMSE': np.nan
+        }
+    # 区分有雨/无雨（基于阈值）
+    obs_rain = obs_valid > threshold
+    sim_rain = sim_valid > threshold
+    # 计算h, m, f, r
+    h = np.sum(obs_rain & sim_rain)  # 击中
+    m = np.sum(obs_rain & ~sim_rain)  # 漏报
+    f = np.sum(~obs_rain & sim_rain)  # 误报
+    r = np.sum(~obs_rain & ~sim_rain)  # 正确否定
+    # 计算传统指标（避免分母为0）
+    POD = h / (h + m) if (h + m) != 0 else np.nan
+    FAR = f / (h + f) if (h + f) != 0 else np.nan
+    CSI = h / (h + m + f) if (h + m + f) != 0 else np.nan
+    ACC = (h + r) / (h + m + f + r) if (h + m + f + r) != 0 else np.nan
+    # 计算皮尔逊相关系数(CC)和决定系数(R²)
+    CC, _ = pearsonr(obs_valid, sim_valid)
+    RMSE = np.sqrt(np.mean((sim_valid - obs_valid) ** 2))
+    R2 = r2_score(obs_valid, sim_valid)
+    return {
+        'CSI': round(CSI, digits),
+        'FAR': round(FAR, digits),
+        'POD': round(POD, digits),
+        'ACC': round(ACC, digits),
+        'CC': round(CC, digits),
+        'R2': round(R2, digits),
+        'RMSE': round(RMSE, digits)
+    }
+
 
 def compute_rmse(da_fc, da_true):
     error = da_fc - da_true
