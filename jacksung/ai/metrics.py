@@ -63,7 +63,8 @@ def uncertainty_bootstrap(obs, sim, metric_func, n_boot=1000, threshold=0.1, pri
     return stats
 
 
-def precipitation_metrics(obs_data, sim_data, threshold=0.1, interval_min=-1, interval_max=1000, digits=4):
+def precipitation_metrics(obs_data, sim_data, threshold=0.1, interval_min=-1, interval_max=1000, digits=4,
+                          record_limit=10):
     """
     计算降水评估指标：CSI, FAR, POD, ACC, CC, R², RMSE
     Parameters:
@@ -95,7 +96,7 @@ def precipitation_metrics(obs_data, sim_data, threshold=0.1, interval_min=-1, in
     valid_mask = ~(np.isnan(obs) | np.isnan(sim) | np.isinf(obs) | np.isinf(sim))
     obs_valid = obs[valid_mask]
     sim_valid = sim[valid_mask]
-    if len(obs_valid) < 10:
+    if len(obs_valid) < record_limit:
         return {
             'CSI': np.nan, 'FAR': np.nan, 'POD': np.nan,
             'ACC': np.nan, 'CC': np.nan, 'R2': np.nan, 'RMSE': np.nan
