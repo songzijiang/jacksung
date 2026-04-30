@@ -1,206 +1,351 @@
-# Jacksung's utils
-Python version is required above 3.9.
+# Jacksung
 
-Recommend version: python 3.11.
+`jacksung` is a personal Python utility package for research and engineering workflows. It includes helpers for ECNU network login, logging, multithreading, MySQL access, NumPy/GeoTIFF/NetCDF conversion, image processing, NVIDIA GPU monitoring, LaTeX polishing with LLMs, and several AI/meteorological data utilities.
 
-Create env by conda: 
-```conda create -n jacksung python=3.11```
+Python 3.9 or later is required. Python 3.11 is recommended.
 
 ## Installation
-```pip install jacksung```
-## Login ecnu
-1 [download chromedriver](https://googlechromelabs.github.io/chrome-for-testing/) on windows is chromedriver.exe and on linux:chromedriver
-    
-*p.s. chrome should be installed first, [see how to install Chrome](https://www.google.com/chrome/)*
 
-2 make the directory 'chrome' in the home path
+Install from PyPI:
 
-3 put the driver file, and make a new directory 'tmp' in the 'chrome' directory (i.e., ~/chrome/chromedriver.exe and ~/chrome/tmp). The structure of directory:
-```
---Home directory
---|--chrome
---|--|--chromedriver.exe
---|--|--tmp
+```bash
+pip install jacksung
 ```
 
-4 How to run?
-- run cmd
-```ecnu_login -u 账号 -p 密码```
-- Or
-set the username and password in ~/.ecnu_login
+Create a clean conda environment first if needed:
+
+```bash
+conda create -n jacksung python=3.11
+conda activate jacksung
+pip install jacksung
 ```
-u: 账户
-p: 密码
+
+For local development:
+
+```bash
+pip install -r requirements.txt
 ```
-and then run cmd ```ecnu_login```
-- Or using python code:
+
+## Package Layout
+
+```text
+jacksung/
+  utils/        General utilities: login, log, database, time, image, conversion, GPU monitor
+  ai/           AI helpers: metrics, LaTeX polishing, GeoNet/GeoAttX, satellite data utilities
 ```
+
+Main command line tools:
+
+- `ecnu_login`: log in, check, or log out of the ECNU campus network.
+- `watch_gpu`: print NVIDIA GPU status using `nvidia-smi`.
+
+## ECNU Login
+
+The login tool uses Selenium and ChromeDriver. Install Chrome first, then download the matching ChromeDriver from [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/).
+
+Expected driver layout:
+
+```text
+Home directory
+`-- chrome
+    |-- chromedriver.exe   # Windows
+    |-- chromedriver       # Linux/macOS
+    `-- tmp
+```
+
+On Windows the default path is `~/chrome/chromedriver.exe`; on other systems it is `~/chrome/chromedriver`.
+
+Run with credentials:
+
+```bash
+ecnu_login -u account -p password
+```
+
+Or store credentials in `~/.ecnu_login`:
+
+```yaml
+u: account
+p: password
+```
+
+Then run:
+
+```bash
+ecnu_login
+```
+
+Supported actions:
+
+```bash
+ecnu_login -t login_check
+ecnu_login -t login
+ecnu_login -t logout
+```
+
+Python usage:
+
+```python
 from jacksung.utils.login import ecnu_login
 
-login = ecnu_login(driver_path='chromedriver_path', tmp_path='tmp_path')
+login = ecnu_login(driver_path="chromedriver_path", tmp_path="tmp_path")
 login.get_drive()
-# Check net status. If have not logged in, will log in.
-login.login_check('username', 'password')
-login.login('username', 'password')
+login.login_check("username", "password")
+login.login("username", "password")
 login.logout()
+login.close_driver()
 ```
 
-## Log
-### time format log
-```
+## Logging
+
+Print messages with timestamps:
+
+```python
 from jacksung.utils.log import oprint as print
 
-print('this is a log')
+print("this is a log")
 ```
-### Send log message to server
-```
-# the URL should accept parameters name and content, e.g. https://www.example.com?log&api-key=123&name=logname&content=logcontent
-log_class = LogClass(url='https://www.example.com?log&api-key=123')
-log_class.send_log('35.8', 'PSNR')
-log_class.send_log('35.8', 'PSNR')
-time.sleep(10)
-```
-### record the terminal log to file
 
+Send log messages to a server. The URL should accept `name` and `content` parameters, for example `https://www.example.com?log&api-key=123&name=logname&content=logcontent`.
+
+```python
+from jacksung.utils.log import LogClass
+
+log_class = LogClass(on=True, url="https://www.example.com?log&api-key=123")
+log_class.send_log("35.8", "PSNR")
 ```
-from jacksung.utils.log import StdLog
+
+Record terminal output to files:
+
+```python
 import sys
+from jacksung.utils.log import StdLog
 
-# please put the following code in the '__main__' function
-if __name__ == '__main__':
-    sys.stdout = StdLog(filename='log.txt', common_path='warning.txt')
-    print(f'[TemporaryTag]Only in terminal', end='[TemporaryTag]\n')
-    print(f'[Warning]In warning.txt and terminal', end='[Warning]\n')
-    print(f'[Error]In warning.txt and terminal', end='[Error]\n')
-    print(f'[Common]Common in warning.txt and terminal', end='[Common]\n')
-    print(f'[OnlyFile]OnlyFile in warning.txt and terminal', end='[OnlyFile]\n')
-    print(f'In log.txt and terminal')
+if __name__ == "__main__":
+    sys.stdout = StdLog(filename="log.txt", common_path="warning.txt")
+    print("[TemporaryTag]Only in terminal", end="[TemporaryTag]\n")
+    print("[Warning]In warning.txt and terminal", end="[Warning]\n")
+    print("[Error]In warning.txt and terminal", end="[Error]\n")
+    print("[Common]Common in warning.txt and terminal", end="[Common]\n")
+    print("[OnlyFile]OnlyFile in warning.txt and terminal", end="[OnlyFile]\n")
+    print("In log.txt and terminal")
 ```
-## Multi threadings
-```
-from jacksung.utils.multi_task import MultiTasks
+
+## Multithreading
+
+```python
 import time
+from jacksung.utils.multi_task import MultiTasks
 
 def worker(idx):
     print(idx)
     time.sleep(2)
     return idx
 
-mt = MultiTasks(3)
+mt = MultiTasks(threads=3)
 for idx in range(10):
-    mt.add_task(idx, worker, (idx))
+    mt.add_task(idx, worker, [idx])
+
 results = mt.execute_task()
 ```
-## Fast numpy
-```
+
+`MultiTasks` uses a thread pool by default. Process mode is also available through `pool=type_process` from `jacksung.utils.multi_task`.
+
+## Fast NumPy
+
+```python
 import jacksung.utils.fastnumpy as fnp
 
-# fast than numpy.load('xx.npy')
-fnp.load('xx.npy')
+data = fnp.load("data.npy")
+fnp.save("copy.npy", data)
 ```
 
-## Connecting to mysql
-```
-from jacksung.utils.base_db import BaseDB, convert_str
+## MySQL
+
+`BaseDB` reads connection settings from an ini file and executes SQL through PyMySQL.
+
+```python
+from jacksung.utils.base_db import BaseDB
+
 class DB:
-    def __init__(self, ini_path='../db.ini'):
+    def __init__(self, ini_path="db.ini"):
         self.bd = BaseDB(ini_path)
-    # List an example of MySQL table, change the sql code to your own. 
+
     def insert_record(self, year, month, day):
-        sql = rf"INSERT INTO `data_record` (`year`,`month`,`day`) VALUES ({year},{month},{day});"
+        sql = f"INSERT INTO `data_record` (`year`, `month`, `day`) VALUES ({year}, {month}, {day});"
         self.bd.execute(sql)
 
     def select_record(self, year, month, day):
-        sql = rf"select count(1) from data_record where year={year} and month={month} and day={day};"
+        sql = f"SELECT COUNT(1) FROM data_record WHERE year={year} AND month={month} AND day={day};"
         result, cursor = self.bd.execute(sql)
         return cursor.fetchone()[0]
 ```
-db.ini is the form  as follows:
-```
+
+Example `db.ini`:
+
+```ini
 [database]
 host = 127.0.0.1
 user = root
 password = root
 database = XXXX
 ```
-## Show Nvdia information
-```watch_gpu```
-or set the command line to the bash file
-```alias watch-gpu='watch -n 1 -d watch_gpu'```
 
-## Time calculating
-### RemainTime
+## NVIDIA GPU Monitor
+
+Print GPU information:
+
+```bash
+watch_gpu
 ```
-from jacksung.utils.time import RemainTime
-import time
 
-epochs=100
+On Linux, you can wrap it with `watch`:
+
+```bash
+alias watch-gpu="watch -n 1 -d watch_gpu"
+```
+
+## Time Utilities
+
+Estimate remaining time:
+
+```python
+import time
+from jacksung.utils.time import RemainTime
+
+epochs = 100
 rt = RemainTime(epochs)
-for i in range(epochs):
+
+for _ in range(epochs):
     rt.update()
     time.sleep(2)
 ```
-### StopWatch:
-pinch(): return the seconds from the last stopwatch reset.
 
-reset(): return the seconds from the last stopwatch reset and reset the stopwatch.
-```
-from jacksung.utils.time import Stopwatch
+Use a stopwatch:
+
+```python
 import time
+from jacksung.utils.time import Stopwatch
 
 sw = Stopwatch()
 time.sleep(1)
-print(sw.pinch())
+print(sw.pinch())  # elapsed time since last reset
 time.sleep(1)
-print(sw.reset())
-time.sleep(1)
-print(sw.pinch())
+print(sw.reset())  # elapsed time and reset
 ```
 
+## Data Conversion
 
-## Convert utils
-convert .nc to numpy, convert numpy to tif (with or without geocoordinate)
+Convert NetCDF to NumPy and NumPy arrays to TIFF/GeoTIFF.
 
-```
-from jacksung.utils.data_convert import nc2np, np2tif
+```python
 import numpy as np
-    
-nc_t, dim = nc2np(r'C:\Users\ECNU\Desktop\upper.nc')
-# nptype data and the path aims to the .npy file are allowed in the np2tif.
-# dim_value examples:
-# 3 dimension example
-# dim_value=[{'value': ['WIN', 'TMP', 'PRS', 'PRE']}]
-# 4 dimension examples
-# dim_value=[{'value': ['WIN', 'TMP']},{'value': ['PRSS', 'HEIGHT']}]
-# without geocoordinate
-np2tif(nc_t, 'constant_masks/upper', dim_value=dim)
-# with geocoordinate
-np2tif('constant_masks/land_mask.npy', save_path='constant_masks', out_name='land_mask', left=0, top=90, x_res=0.25,
-       y_res=0.25, dtype=np.float32, dim_value=dim)
+from jacksung.utils.data_convert import nc2np, np2tif
+
+nc_data, dim = nc2np(r"C:\Users\ECNU\Desktop\upper.nc")
+
+# Without geocoordinates
+np2tif(nc_data, "constant_masks/upper", dim_value=dim)
+
+# With geocoordinates
+np2tif(
+    "constant_masks/land_mask.npy",
+    save_path="constant_masks",
+    out_name="land_mask",
+    left=0,
+    top=90,
+    x_res=0.25,
+    y_res=0.25,
+    dtype=np.float32,
+)
 ```
-## AI tools
-### latex auto polish
-auto polish latex using LLM.
+
+`dim_value` can be used to name output files generated from multi-dimensional arrays:
+
+```python
+dim_value = [{"value": ["WIN", "TMP"]}, {"value": ["PRS", "HEIGHT"]}]
 ```
+
+Other useful helpers include `Coordinate`, `nc2tif`, `get_transform_from_lonlat_matrices`, `haversine_distance`, and `fill_nan_with_window_mean`.
+
+## Image Utilities
+
+`jacksung.utils.image` includes helpers for drawing text and borders, building color maps, cropping PNGs, concatenating images, creating GIFs, zooming image regions, and drawing boundaries.
+
+```python
+import cv2
+from jacksung.utils.image import concatenate_images, create_gif
+
+img1 = cv2.imread("a.png")
+img2 = cv2.imread("b.png")
+merged = concatenate_images([img1, img2], direction="h")
+cv2.imwrite("merged.png", merged)
+
+create_gif("frames_dir", "demo.gif", duration=500)
+```
+
+## AI Tools
+
+### LaTeX Auto Polish
+
+`jacksung.ai.latex_tool.polish` can polish a LaTeX manuscript through an OpenAI-compatible LLM server.
+
+```python
 from jacksung.ai.latex_tool import polish
-# e.g.
-# if your main.tex located in '/mnt/paper1/main.tex'
-# main_dir_path is '/mnt/paper1' and tex_file is 'main.tex'
-# If your paper is in Chinese or other language, use cn_prompt=True
-# If you want to use custom prompt, you can use prompt with '{text}'.
-# You can define the skip or rewrite part using skip_part_list and rewrite_list. If you don`t know how to set, the default setting is recommended.
-polish(main_dir_path='your latex root directory', tex_file='your main tex path consider from main_dir_path', server_url='The full LLM server url with v1',
-       token='Your token here',
-       )
+
+polish(
+    main_dir_path="your latex root directory",
+    tex_file="main.tex",
+    server_url="The full LLM server url with /v1",
+    token="Your token here",
+)
 ```
-- After running, three .tex file: "old.tex","new.tex","diff.tex" in the parnent directory will generated. The file change track PDF will compiled by diff.tex.
-- If there are errors in compiling diff.tex, you need to revise the produced new.tex to fix the bug first.
-- The LLM is recommend at least Deepseek-R1-70b and bigger, smaller model will produce more bugs lead to errors.
-## Note
-#### Commit new dependence
-Please refer to how to upload a dependence
+
+Notes:
+
+- If the paper is Chinese or needs a Chinese prompt, set `cn_prompt=True`.
+- To use a custom prompt, pass `prompt` containing `{text}`.
+- The tool generates `old.tex`, `new.tex`, and `diff.tex` in the parent directory.
+- The change-tracking PDF is compiled from `diff.tex`.
+- If `diff.tex` fails to compile, fix the generated `new.tex` first.
+- A strong model is recommended; small models may introduce LaTeX syntax errors.
+
+### Metrics and Meteorological Utilities
+
+The `jacksung.ai` package also contains:
+
+- `jacksung.ai.metrics`: precipitation metrics, RMSE, PSNR, SSIM, AUROC, and bootstrap uncertainty.
+- `jacksung.ai.GeoNet`: GeoNet model definitions.
+- `jacksung.ai.GeoAttX`: prediction helpers for GeoAttX-related workflows.
+- `jacksung.ai.utils`: satellite and precipitation data utilities for FY, FY-3G, GOES, GSMaP, IMERG, CMORPH, SEVIRI/Meteosat, normalization, and PyTorch training helpers.
+
+These modules depend on scientific and geospatial packages such as NumPy, rasterio, netCDF4, satpy, pyresample, OpenCV, Pillow, and PyTorch.
+
+## Hash and Miscellaneous Utilities
+
+```python
+from jacksung.utils.hash import calculate_file_hash, hash_string
+from jacksung.utils.number import round2str
+
+print(hash_string("hello"))
+print(calculate_file_hash("README.md"))
+print(round2str(3.14159, digits=2))
 ```
+
+## Development and Release （for developers）
+
+Build and upload a release:
+
+```bash
 python setup.py sdist bdist_wheel
 twine upload dist/*
 ```
-The repo is built by jacksung, contact me by jacksung1995@gmail.com
+
+Be aware that `setup.py` currently increments the local version stored in `loacaldb.json`, removes build artifacts, and attempts to commit the version update with Git.
+
+## License
+
+This project is released under the Apache License 2.0. See [LICENSE](LICENSE).
+
+## Contact
+
+Maintained by Zijiang Song. Contact: <jacksung1995@gmail.com>.
