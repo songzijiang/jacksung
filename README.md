@@ -39,6 +39,46 @@ Main command line tools:
 - `ecnu_login`: log in, check, or log out of the ECNU campus network.
 - `watch_gpu`: print NVIDIA GPU status using `nvidia-smi`.
 
+## Feature Index
+
+The package contains the following modules and utilities.
+
+General utilities:
+
+- `jacksung.utils.base_db`: MySQL connection wrapper, SQL execution, string/number conversion helpers.
+- `jacksung.utils.cache`: small in-memory FIFO cache with keyed values.
+- `jacksung.utils.data_convert`: NetCDF, NumPy, TIFF/GeoTIFF conversion, coordinate helpers, DMS conversion, lon/lat transform fitting, NaN window filling.
+- `jacksung.utils.exception`: custom file/NaN exceptions and `wait_fun` retry helper.
+- `jacksung.utils.fastnumpy`: fast NumPy save/load plus binary `pack`/`unpack` helpers and streaming mean accumulator.
+- `jacksung.utils.figure`: figure rendering helpers for NumPy grids, color bars, labeled maps, and image export.
+- `jacksung.utils.hash`: file, file-list, and string hashing.
+- `jacksung.utils.image`: pixel lookup by coordinate, text drawing, borders, color maps, crop, concat, GIF, zoom/dock, and boundary extraction.
+- `jacksung.utils.log`: timestamped print, server log sender, stdout tee/file logger.
+- `jacksung.utils.login`: Selenium-based ECNU login client and `ecnu_login` CLI.
+- `jacksung.utils.mean_std`: merge partial mean/std statistics and compute mean/std from accumulated sums.
+- `jacksung.utils.multi_task`: thread/process task executor and lock helpers.
+- `jacksung.utils.number`: numeric formatting helpers.
+- `jacksung.utils.nvidia`: colored `nvidia-smi` display and `watch_gpu` CLI.
+- `jacksung.utils.time`: date/time string helpers, remaining-time estimator, stopwatch, human-readable size formatting.
+- `jacksung.utils.web`: Chrome Selenium driver factory with headless, temporary directory, and download directory options.
+
+AI and meteorological utilities:
+
+- `jacksung.ai.latex_tool`: OpenAI-compatible LaTeX polishing workflow, prompt builders, merge/diff helpers.
+- `jacksung.ai.metrics`: precipitation metrics, bootstrap uncertainty, RMSE, PSNR, SSIM, AUROC, tensor conversion.
+- `jacksung.ai.GeoAttX`: GeoAttX base class and prediction workflows for interpolation, precipitation/QPE, and Huayu-style inference.
+- `jacksung.ai.GeoNet`: GeoNet network definitions and reusable model blocks.
+- `jacksung.ai.utils.cmorph`: CMORPH HDF to NumPy conversion.
+- `jacksung.ai.utils.data_parallelV2`: balanced PyTorch `DataParallel` helpers.
+- `jacksung.ai.utils.fy`: FY satellite coordinate tools, filename parsing, HDF/NetCDF conversion, clipping, registration, and date lookup.
+- `jacksung.ai.utils.fy3g`: FY-3G HDF conversion and filename parsing.
+- `jacksung.ai.utils.goes`: GOES resampling, single-channel extraction, directory lookup, and NumPy conversion.
+- `jacksung.ai.utils.gsmap`: GSMaP HDF to NumPy conversion.
+- `jacksung.ai.utils.imerg`: IMERG downloader and HDF to NumPy conversion.
+- `jacksung.ai.utils.metsat`: Meteosat/SEVIRI NAT processing through Satpy, WGS84 area definition, and file lookup.
+- `jacksung.ai.utils.norm_util`: prediction, precipitation, and generic normalization helpers.
+- `jacksung.ai.utils.util`: model loading/saving, config parsing, device transfer, metric tracking, plotting, augmentation, and satellite clipping.
+
 ## ECNU Login
 
 The login tool uses Selenium and ChromeDriver. Install Chrome first, then download the matching ChromeDriver from [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/).
@@ -267,6 +307,30 @@ dim_value = [{"value": ["WIN", "TMP"]}, {"value": ["PRS", "HEIGHT"]}]
 
 Other useful helpers include `Coordinate`, `nc2tif`, `get_transform_from_lonlat_matrices`, `haversine_distance`, and `fill_nan_with_window_mean`.
 
+## Figure Utilities
+
+`jacksung.utils.figure` focuses on converting NumPy arrays into visual products with color mapping and optional geospatial context.
+
+```python
+from jacksung.utils.figure import make_color_map, make_fig
+
+colors = [
+    [0, "#FFFFFF"],
+    [10, "#00A0FF"],
+    [50, "#FFDD00"],
+    [100, "#FF0000"],
+]
+
+color_bar = make_color_map(colors, h=220, w=1200, unit="mm")
+make_fig(
+    "rain.npy",
+    area=((100, 140, 10), (20, 60, 10)),
+    save_name="figures/rain.png",
+    colors=colors,
+    colormap_unit="mm",
+)
+```
+
 ## Image Utilities
 
 `jacksung.utils.image` includes helpers for drawing text and borders, building color maps, cropping PNGs, concatenating images, creating GIFs, zooming image regions, and drawing boundaries.
@@ -281,6 +345,43 @@ merged = concatenate_images([img1, img2], direction="h")
 cv2.imwrite("merged.png", merged)
 
 create_gif("frames_dir", "demo.gif", duration=500)
+```
+
+## Web Driver
+
+Create a Chrome Selenium driver for browser automation or downloads:
+
+```python
+from jacksung.utils.web import make_driver
+
+driver = make_driver(
+    url="https://example.com",
+    is_headless=True,
+    tmp_path="chrome_tmp",
+    download_dir="downloads",
+)
+driver.quit()
+```
+
+## Cache, Retry, and Statistics Helpers
+
+```python
+import numpy as np
+from jacksung.utils.cache import Cache
+from jacksung.utils.exception import wait_fun
+from jacksung.utils.mean_std import cal_mean_std_one_loop, mean_std_part2all
+
+cache = Cache(cache_len=2)
+cache.add_key("a", 1)
+print(cache.get_key_in_cache("a"))
+
+result = wait_fun(lambda x: x + 1, args=[1])
+
+batch = np.random.rand(4, 3, 16, 16)
+s = batch.sum(axis=0)
+ss = (batch ** 2).sum(axis=0)
+mean_pixel, std_pixel, mean_level, std_level = cal_mean_std_one_loop(s, ss, count=4)
+merged_mean, merged_std = mean_std_part2all([4], [mean_pixel], [std_pixel])
 ```
 
 ## AI Tools
@@ -320,6 +421,42 @@ The `jacksung.ai` package also contains:
 
 These modules depend on scientific and geospatial packages such as NumPy, rasterio, netCDF4, satpy, pyresample, OpenCV, Pillow, and PyTorch.
 
+### Training Utilities
+
+```python
+import numpy as np
+from jacksung.ai.utils.util import data_to_device, load_model, parse_config, save_model
+from jacksung.ai.utils.norm_util import Normalization
+
+config = parse_config("config.yml")
+mean_std = np.load("mean_std.npy")
+norm = Normalization(mean_std)
+```
+
+`BalancedDataParallel` can be used when GPU 0 should receive a smaller batch than other GPUs.
+
+```python
+from jacksung.ai.utils.data_parallelV2 import BalancedDataParallel
+
+model = BalancedDataParallel(gpu0_bsz=2, module=model, device_ids=[0, 1, 2])
+```
+
+### Satellite Data Utilities
+
+The satellite helpers convert common precipitation and meteorological products into NumPy arrays and provide filename/date/coordinate utilities.
+
+```python
+from datetime import datetime
+from jacksung.ai.utils.fy import getNPfromHDF as read_fy
+from jacksung.ai.utils.goes import getNPfromDir as read_goes_dir
+from jacksung.ai.utils.metsat import getNPfromNAT
+
+date = datetime(2024, 1, 1, 0, 0)
+fy_data = read_fy("FY4A_file.HDF")
+goes_data = read_goes_dir("goes_dir", date)
+metsat_data = getNPfromNAT("seviri_file.nat")
+```
+
 ## Hash and Miscellaneous Utilities
 
 ```python
@@ -329,6 +466,14 @@ from jacksung.utils.number import round2str
 print(hash_string("hello"))
 print(calculate_file_hash("README.md"))
 print(round2str(3.14159, digits=2))
+```
+
+More hash helpers:
+
+```python
+from jacksung.utils.hash import hash_files
+
+digest = hash_files(["README.md", "setup.py"])
 ```
 
 ## Development and Release （for developers）
