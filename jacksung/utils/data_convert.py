@@ -356,6 +356,109 @@ def fill_nan_with_window_mean(arr, window_size=(3, 3), channel_last=False):
     return filled_arr
 
 
+import numpy as np
+from scipy.ndimage import uniform_filter
+
+
+def fill_nan_with_window_mean_fast(arr, window_size=(3, 3), channel_last=False):
+    """
+    使用窗口均值快速填充 NaN。
+    支持:
+    - 2D: (H, W)
+    - 3D: (C, H, W) 或 (H, W, C)
+    - 4D: (B, C, H, W) 或 (B, H, W, C)
+
+    注意：
+    这是“一次性填充”，所有 NaN 都基于原始数组中的非 NaN 值计算。
+    不会像原始 for 循环那样，后面的 NaN 可能用到前面刚填好的值。
+    """
+
+    arr = np.asarray(arr)
+    out = arr.copy()
+
+    win_h, win_w = window_size
+
+    if win_h % 2 == 0 or win_w % 2 == 0:
+        raise ValueError("建议使用奇数窗口，例如 (3, 3)、(5, 5)。偶数窗口的中心定义容易产生歧义。")
+
+    orig_ndim = out.ndim
+
+    # ---------- 转成 (B, C, H, W) ----------
+    if orig_ndim == 2:
+        x = out[np.newaxis, np.newaxis, :, :]
+
+    elif orig_ndim == 3:
+        if channel_last:
+            x = out.transpose(2, 0, 1)[np.newaxis, :, :, :]
+        else:
+            x = out[np.newaxis, :, :, :]
+
+    elif orig_ndim == 4:
+        if channel_last:
+            x = out.transpose(0, 3, 1, 2)
+        else:
+            x = out
+
+    else:
+        raise ValueError(f"不支持 {orig_ndim} 维数组，仅支持 2-4 维")
+
+    # ---------- 核心加速 ----------
+    nan_mask = np.isnan(x)
+
+    if not nan_mask.any():
+        return out
+
+    valid_mask = (~nan_mask).astype(np.float64)
+
+    # NaN 当成 0，用于窗口求和
+    values = np.where(nan_mask, 0.0, x).astype(np.float64)
+
+    size = (1, 1, win_h, win_w)
+
+    # 窗口内数值和
+    window_sum = uniform_filter(
+        values,
+        size=size,
+        mode="constant",
+        cval=0.0
+    )
+
+    # 窗口内有效值数量
+    window_count = uniform_filter(
+        valid_mask,
+        size=size,
+        mode="constant",
+        cval=0.0
+    )
+
+    # 因为 uniform_filter 算的是平均值，
+    # 但 sum 和 count 都除以了相同窗口面积，所以二者相除仍然是正确均值
+    window_mean = window_sum / window_count
+
+    fill_mask = nan_mask & (window_count > 0)
+
+    x[fill_mask] = window_mean[fill_mask]
+
+    # 如果窗口内全是 NaN，则仍然保持 NaN
+    x[nan_mask & (window_count == 0)] = np.nan
+
+    # ---------- 恢复原始形状 ----------
+    if orig_ndim == 2:
+        return x[0, 0]
+
+    elif orig_ndim == 3:
+        if channel_last:
+            return x[0].transpose(1, 2, 0)
+        else:
+            return x[0]
+
+    elif orig_ndim == 4:
+        if channel_last:
+            return x.transpose(0, 2, 3, 1)
+        else:
+            return x
+
+
 if __name__ == '__main__':
     # 构造测试数组
     test_arr = np.array([
@@ -366,7 +469,10 @@ if __name__ == '__main__':
 
     # 用3x3窗口填充
     filled_arr = fill_nan_with_window_mean(test_arr, window_size=(3, 3))
+    filled_arr_fast = fill_nan_with_window_mean_fast(test_arr, window_size=(3, 3))
     print("原数组：")
     print(test_arr)
     print("\n填充后数组：")
     print(filled_arr)
+    print("\n快速填充后数组：")
+    print(filled_arr_fast)
