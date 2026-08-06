@@ -81,7 +81,7 @@ setup(
         # --- 遥感 / 气象 ---
         'netCDF4>=1.6.4',
         'rasterio>=1.3.9',
-        'GDAL>=3.6.2',
+        'GDAL==3.6.2',
         'cartopy>=0.22.0',
         'xarray>=2023.10.1',
         'pyresample>=1.34.2',
