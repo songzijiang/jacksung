@@ -5,18 +5,12 @@
 Python 3.9 or later is required. Python 3.11 is recommended.
 
 ## Installation
-
-Install from PyPI:
-
-```bash
-pip install jacksung
-```
-
 Create a clean conda environment first if needed:
 
 ```bash
 conda create -n jacksung python=3.11
 conda activate jacksung
+conda install gdal==3.6.2
 pip install jacksung
 ```
 
