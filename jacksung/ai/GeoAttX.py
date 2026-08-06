@@ -79,9 +79,12 @@ class GeoAttX_I(GeoAttX):
         if device is not None:
             self.device = device
         self.f, self.n, self.ys = None, None, None
-        self.x1 = self.load_model(x1_path)
-        self.x4 = self.load_model(x4_path)
-        self.x12 = self.load_model(x12_path)
+        if x1_path is not None:
+            self.x1 = self.load_model(x1_path)
+        if x4_path is not None:
+            self.x4 = self.load_model(x4_path)
+        if x12_path is not None:
+            self.x12 = self.load_model(x12_path)
         # self.x48 = self.load_model(x48_path)
         self.norm = PredNormalization(self.norm_path)
         self.norm.mean, self.norm.std = data_to_device([self.norm.mean, self.norm.std], self.device, self.args.fp)

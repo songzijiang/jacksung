@@ -1,374 +1,115 @@
+import json
+import os
 import shutil
-
-from setuptools import setup, find_packages
-from tinydb import TinyDB, Query
 import subprocess
+from pathlib import Path
 
-shutil.rmtree('build', ignore_errors=True)
-shutil.rmtree('dist', ignore_errors=True)
-shutil.rmtree('jacksung.egg-info', ignore_errors=True)
-db = TinyDB('loacaldb.json')
-infos = db.all()
-if len(infos) == 0:
+from setuptools import find_packages, setup
+
+# ---------------------------------------------------------------------------
+# 版本管理：仅在本地 git 仓库中自增版本、清理构建产物并自动提交。
+# 这样 pip 从 sdist 安装时不会误改版本号，也不会在临时目录里执行 git 提交。
+# 用标准库 json 替代 tinydb，避免在 pip 隔离构建环境中因缺 tinydb 而 ImportError。
+# ---------------------------------------------------------------------------
+DB_FILE = 'loacaldb.json'
+IS_REPO = os.path.isdir('.git')
+
+
+def _load_version():
+    """读取当前版本号，兼容旧 TinyDB 存储格式 {"_default": {"1": {"version": "..."}}}。"""
     version = '0.0.0.0'
-    db.insert({'version': version})
-else:
-    version = db.all()[0]['version']
-version = '.'.join(version.split('.')[:-1]) + '.' + str(int(version.split('.')[-1]) + 1)
-db.update({'version': version})
-db.close()
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, encoding='utf-8') as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            data = {}
+        if isinstance(data, dict):
+            default = data.get('_default')
+            if isinstance(default, dict):
+                for doc in default.values():
+                    if isinstance(doc, dict) and 'version' in doc:
+                        version = doc['version']
+                        break
+            else:
+                version = data.get('version', version)
+    return version
+
+
+def _bump_version(current):
+    """把 0.0.4.86 递增为 0.0.4.87；末段不是数字时追加 .1。"""
+    parts = str(current).split('.')
+    if parts[-1].isdigit():
+        parts[-1] = str(int(parts[-1]) + 1)
+    else:
+        parts.append('1')
+    return '.'.join(parts)
+
+
+version = _load_version()
+
+if IS_REPO:
+    # 仅在本地发版时清理构建产物并递增版本号
+    for stale in ('build', 'dist', 'jacksung.egg-info'):
+        shutil.rmtree(stale, ignore_errors=True)
+    version = _bump_version(version)
+    with open(DB_FILE, 'w', encoding='utf-8') as f:
+        json.dump({'version': version}, f)
+
 setup(
     name='jacksung',
     version=version,
     author='Zijiang Song',
-    long_description=open('README.md', encoding='utf-8').read(),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
     packages=find_packages(),
     include_package_data=True,
+    package_data={'jacksung': ['libs/*']},
+    # 精简后的真实运行时依赖（宽松下限版本）。
+    # 完整的环境快照仍保留在 requirements.txt 中供开发环境使用。
     install_requires=[
-        'affine==2.4.0',
-        'aiofiles==23.2.1',
-        'aiohappyeyeballs==2.4.4',
-        'aiohttp==3.11.10',
-        'aiosignal==1.2.0',
-        'alabaster==1.0.0',
-        'aligo==6.2.0',
-        'altair==5.2.0',
-        'altgraph==0.17.4',
-        'aniso8601==9.0.1',
-        'annotated-types==0.6.0',
-        'anyio==4.3.0',
-        'appdirs==1.4.4',
-        'apptools==5.2.1',
-        'APScheduler==3.11.0',
-        'arrow==1.3.0',
-        'astor==0.8.1',
-        'asttokens==2.4.1',
-        'attrs==24.3.0',
-        'azure-ai-textanalytics==5.3.0',
-        'azure-common==1.1.28',
-        'azure-core==1.35.1',
-        'azure-identity==1.25.1',
-        'babel==2.17.0',
-        'backoff==2.2.1',
-        'backports.shutil-get-terminal-size==1.0.0',
-        'bcrypt==4.0.1',
-        'beautifulsoup4==4.12.3',
-        'blinker==1.7.0',
-        'boto3==1.40.72',
-        'botocore==1.40.72',
-        'Brotli==1.0.9',
-        'cachetools==5.3.3',
-        'Cartopy==0.22.0',
-        'cdsapi==0.6.1',
-        'certifi==2025.8.3',
-        'cffi==1.16.0',
-        'cftime==1.6.2',
-        'charset-normalizer==3.3.0',
-        'chart-studio==1.1.0',
-        'click==8.1.7',
-        'click-plugins==1.1.1',
-        'cligj==0.7.2',
-        'cloudpickle==3.1.2',
-        'colorama==0.4.6',
-        'coloredlogs==15.0.1',
-        'comm==0.2.2',
-        'configobj==5.0.8',
-        'contourpy==1.0.5',
-        'cryptography==44.0.2',
-        'cupy-cuda11x==13.6.0',
-        'cycler==0.12.1',
-        'Cython==3.0.3',
-        'dask==2025.11.0',
-        'dataclasses-json==0.6.7',
-        'datclass==0.2.27',
-        'dateutils==0.6.12',
-        'ddddocr==1.4.10',
-        'decorator==5.1.1',
-        'defusedxml==0.7.1',
-        'distro==1.9.0',
-        'docutils==0.20.1',
-        'donfig==0.8.1.post1',
-        'duckdb==0.10.0',
-        'easywebdav==1.2.0',
-        'echarts-china-counties-pypkg==0.0.2',
-        'echarts-china-misc-pypkg==0.0.1',
-        'echarts-china-provinces-pypkg==0.0.3',
-        'echarts-countries-pypkg==0.1.6',
-        'echarts-united-kingdom-pypkg==0.0.1',
-        'ecmwf-opendata==0.2.0',
-        'einops==0.7.0',
-        'envisage==7.0.3',
-        'ephem==4.1.5',
-        'et_xmlfile==2.0.0',
-        'eumdac==3.0.0',
-        'executing==2.0.1',
-        'fastapi==0.110.0',
-        'fastrlock==0.8.3',
-        'ffmpy==0.3.2',
-        'filelock==3.12.4',
-        'Flask==3.0.2',
-        'Flask-Cors==4.0.1',
-        'Flask-RESTful==0.3.10',
-        'flatbuffers==23.5.26',
-        'fonttools==4.25.0',
-        'frozenlist==1.5.0',
-        'fsspec==2025.10.0',
-        'GDAL==3.6.2',
-        'geojson==3.2.0',
-        'geomet==1.1.0',
-        'google-crc32c==1.7.1',
-        'gradio==4.21.0',
-        'gradio_client==0.12.0',
-        'greenlet==3.0.3',
-        'gw_dsl_parser==0.1.45a6',
-        'h11==0.14.0',
-        'h5py==3.10.0',
-        'html2text==2025.4.15',
-        'httpcore==1.0.2',
-        'httpx==0.27.0',
-        'httpx-sse==0.4.0',
-        'huggingface-hub==0.21.4',
-        'humanfriendly==10.0',
-        'idna==3.4',
-        'imageio==2.33.1',
-        'imagesize==1.4.1',
-        'importlib_metadata==7.1.0',
-        'importlib_resources==6.3.0',
-        'iniconfig==2.0.0',
-        'ipython==8.22.2',
-        'ipywidgets==8.1.2',
-        'isodate==0.7.2',
-        'itsdangerous==2.1.2',
-        'jaraco.classes==3.4.0',
-        'jaraco.context==4.3.0',
-        'jaraco.functools==4.0.0',
-        'jedi==0.19.1',
-        'Jinja2==3.1.2',
-        'jiter==0.8.2',
-        'jmespath==1.0.1',
-        'joblib==1.3.2',
-        'jsonpatch==1.33',
-        'jsonpointer==2.1',
-        'jsonschema==4.21.1',
-        'jsonschema-specifications==2023.12.1',
-        'jupyterlab_widgets==3.0.10',
-        'kanaries_track==0.0.4',
-        'keyring==25.0.0',
-        'kiwisolver==1.4.4',
-        'langchain==0.3.19',
-        'langchain-community==0.3.18',
-        'langchain-core==0.3.37',
-        'langchain-text-splitters==0.3.6',
-        'langsmith==0.1.147',
-        'lazy_loader==0.3',
-        'lb_toolkits==2.1.2',
-        'lightning-utilities==0.10.0',
-        'lml==0.0.2',
-        'locket==1.0.0',
-        'loss-landscapes==3.0.6',
-        'markdown-it-py==3.0.0',
-        'MarkupSafe==2.1.3',
-        'marshmallow==3.26.1',
-        'matplotlib==3.10.7',
-        'matplotlib-inline==0.1.6',
-        'mayavi==4.8.1',
-        'mdurl==0.1.2',
-        'mkl-fft==1.3.8',
-        'mkl-random==1.2.4',
-        'mkl-service==2.4.0',
-        'monotonic==1.6',
-        'more-itertools==10.2.0',
-        'mpmath==1.3.0',
-        'msal==1.34.0',
-        'msal-extensions==1.3.1',
-        'multidict==6.1.0',
-        'multiurl==0.2.3.2',
-        'munkres==1.1.4',
-        'mypy-extensions==1.0.0',
-        'ncvue==4.1.2',
-        'netCDF4==1.6.4',
-        'netron==7.3.2',
-        'networkx==3.2',
-        'nh3==0.2.17',
-        'numcodecs==0.16.5',
-        'numpy==1.26.4',
-        'onnx==1.13.1',
-        'onnx-pytorch==0.1.5',
-        'onnx2pytorch==0.4.1',
-        'onnxruntime==1.16.3',
-        'onnxruntime-gpu==1.16.0',
-        'onnxsim==0.4.35',
-        'openai==1.64.0',
-        'opencv-python==4.9.0.80',
-        'opencv-python-headless==4.8.1.78',
-        'openpyxl==3.1.5',
-        'ordered-set==4.1.0',
-        'orjson==3.10.14',
-        'outcome==1.3.0',
-        'packaging==23.2',
-        'pandas==2.1.1',
-        'paramiko==3.5.1',
-        'parso==0.8.3',
-        'partd==1.4.2',
-        'passlib==1.7.4',
-        'pathlib_abc==0.5.2',
-        'pefile==2023.2.7',
-        'pillow==10.4.0',
-        'pkginfo==1.10.0',
-        'platformdirs==4.5.0',
-        'plotly==5.20.0',
-        'pluggy==1.3.0',
-        'pooch==1.8.2',
-        'prettytable==3.10.0',
-        'prompt-toolkit==3.0.43',
-        'propcache==0.2.0',
-        'protobuf==3.20.3',
-        'psutil==5.9.8',
-        'pure-eval==0.2.2',
-        'pyarrow==15.0.1',
-        'pycparser==2.21',
-        'pydantic==2.10.3',
-        'pydantic-settings==2.8.0',
-        'pydantic_core==2.27.1',
-        'pydub==0.25.1',
-        'pyecharts==2.0.5',
-        'pyecharts-jupyter-installer==0.0.3',
-        'pyface==8.0.0',
-        'pygame==2.5.2',
-        'Pygments==2.17.2',
-        'pygwalker==0.4.7',
-        'pyinstaller==6.16.0',
-        'pyinstaller-hooks-contrib==2025.9',
-        'PyJWT==2.10.1',
-        'pykdtree==1.3.9',
-        'PyKrige==1.7.1',
-        'PyLaTeX==1.4.2',
-        'PyMySQL==1.1.0',
-        'PyNaCl==1.5.0',
-        'pyorbital==1.11.0',
-        'pyparsing==3.1.1',
-        'pypng==0.20220715.0',
-        'pyproj==3.7.2',
-        'pyreadline3==3.4.1',
-        'pyresample==1.34.2',
-        'pyshp==2.3.1',
-        'PySocks==1.7.1',
-        'pytest==7.4.3',
-        'python-dateutil==2.8.2',
-        'python-dotenv==1.0.1',
-        'python-multipart==0.0.9',
-        'pytorch-msssim==1.0.0',
-        'pytz==2023.3.post1',
-        'pywin32-ctypes==0.2.2',
-        'PyYAML==6.0.1',
-        'qq-botpy==1.2.1',
-        'qrcode==7.4.2',
-        'qrcode-terminal==0.8',
-        'rasterio==1.3.9',
-        'readme_renderer==43.0',
-        'referencing==0.33.0',
-        'reprint==0.6.0',
-        'requests==2.31.0',
-        'requests-toolbelt==1.0.0',
-        'retrying==1.3.4',
-        'rfc3986==2.0.0',
-        'rich==13.7.0',
-        'roman-numerals-py==3.1.0',
-        'rpds-py==0.18.0',
-        'ruff==0.3.2',
-        's3transfer==0.14.0',
-        'safetensors==0.4.0',
-        'satpy==0.59.0',
-        'schedule==1.2.1',
-        'scikit-image==0.22.0',
-        'scikit-learn==1.3.2',
-        'scipy==1.11.3',
-        'seaborn==0.13.2',
-        'segment-analytics-python==2.2.3',
-        'selenium==4.35.0',
-        'semantic-version==2.10.0',
-        'setuptools==68.0.0',
-        'shapely==2.0.5',
-        'shellingham==1.5.4',
-        'simplejson==3.19.2',
-        'six==1.16.0',
-        'snapshot-selenium==0.0.2',
-        'sniffio==1.3.0',
-        'snowballstemmer==2.2.0',
-        'snuggs==1.4.7',
-        'sortedcontainers==2.4.0',
-        'soupsieve==2.5',
-        'Sphinx==8.2.3',
-        'sphinx-rtd-theme==3.0.2',
-        'sphinxcontrib-applehelp==2.0.0',
-        'sphinxcontrib-devhelp==2.0.0',
-        'sphinxcontrib-htmlhelp==2.1.0',
-        'sphinxcontrib-jquery==4.1',
-        'sphinxcontrib-jsmath==1.0.1',
-        'sphinxcontrib-qthelp==2.0.0',
-        'sphinxcontrib-serializinghtml==2.0.0',
-        'SQLAlchemy==2.0.28',
-        'sqlglot==22.4.0',
-        'stack-data==0.6.3',
-        'starlette==0.36.3',
-        'sympy==1.12',
-        'tenacity==8.2.3',
-        'termcolor==2.3.0',
-        'threadpoolctl==3.2.0',
-        'tifffile==2023.9.26',
-        'timm==0.9.8',
-        'tinydb==4.8.2',
-        'tomlkit==0.12.0',
-        'toolz==0.12.1',
-        'torch==2.1.0+cu121',
-        'torchaudio==2.1.0+cu121',
-        'torchmetrics==1.2.1',
-        'torchvision==0.16.0+cu121',
-        'tqdm==4.66.1',
-        'traitlets==5.14.2',
-        'traits==6.4.3',
-        'traitsui==8.0.0',
-        'trio==0.30.0',
-        'trio-websocket==0.12.2',
-        'trollimage==1.27.0',
-        'trollsift==1.0.0',
-        'twine==5.0.0',
-        'typer==0.9.0',
-        'types-python-dateutil==2.8.19.20240311',
-        'typing-inspect==0.9.0',
-        'typing_extensions==4.14.1',
-        'tzdata==2023.3',
-        'tzlocal==5.3',
-        'undetected-chromedriver==3.5.5',
-        'universal_pathlib==0.3.6',
-        'urllib3==2.5.0',
-        'uvicorn==0.28.0',
-        'vtk==9.3.0',
-        'wasmtime==12.0.0',
-        'wcwidth==0.2.13',
-        'websocket-client==1.8.0',
-        'websockets==11.0.3',
-        'Werkzeug==3.0.1',
-        'wget==3.2',
-        'wheel==0.41.2',
-        'widgetsnbextension==4.0.10',
-        'win-inet-pton==1.1.0',
-        'windows-curses==2.3.1',
-        'wsproto==1.2.0',
-        'xarray==2023.10.1',
-        'yarl==1.18.0',
-        'zarr==3.1.5',
-        'zipp==3.18.1',
+        # --- 基础科学计算 ---
+        'numpy>=1.26.4',
+        'scipy>=1.11.3',
+        'matplotlib>=3.10.7',
+        'einops>=0.7.0',
+        'tqdm>=4.66.1',
+        # --- 深度学习 ---
+        'torch>=2.1.0',  # 如需 torchvision/torchaudio，请按官方源单独安装
+        'torchmetrics>=1.2.1',
+        'pytorch-msssim>=1.0.0',
+        # --- 遥感 / 气象 ---
+        'netCDF4>=1.6.4',
+        'rasterio>=1.3.9',
+        'GDAL>=3.6.2',
+        'cartopy>=0.22.0',
+        'xarray>=2023.10.1',
+        'pyresample>=1.34.2',
+        'satpy>=0.59.0',
+        # --- 图像 / 机器学习 ---
+        'opencv-python>=4.9.0.80',
+        'Pillow>=10.4.0',
+        'scikit-learn>=1.3.2',
+        # --- 网络 / 数据获取 ---
+        'requests>=2.31.0',
+        'selenium>=4.35.0',
+        'openai>=1.64.0',
+        'PyMySQL>=1.1.0',
+        # --- 其他 ---
+        'PyYAML>=6.0.1',
+        'pytz>=2023.3.post1',
+        'termcolor>=2.3.0',
     ],
     entry_points={
         'console_scripts': [
             'ecnu_login = jacksung.utils.login:main',
             'watch_gpu = jacksung.utils.nvidia:main'
         ]
-    }
+    },
 )
-try:
-    subprocess.run(["git", "commit", "-am", rf"Update package {version}"], check=True)
-except subprocess.CalledProcessError as e:
-    print("Git 命令执行失败:", e)
+
+if IS_REPO:
+    try:
+        subprocess.run(["git", "commit", "-am", f"Update package {version}"], check=True)
+    except subprocess.CalledProcessError as e:
+        print("Git 命令执行失败:", e)
