@@ -389,7 +389,7 @@ class Huayu(GeoAttX):
             # y = rearrange(y[0], 'b h w -> b h w', b=b)
             _, H, W = y.shape
             if smooth:
-                y[, 1:H - 1, 1:W - 1] = smooth(y)[, 1:H - 1, 1:W - 1]
+                y[:, 1:H - 1, 1:W - 1] = smooth(y)[:, 1:H - 1, 1:W - 1]
             if self.print_timelog:
                 print('post process:', st.reset())
             return y.detach().cpu().numpy()
