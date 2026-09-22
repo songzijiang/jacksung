@@ -387,12 +387,12 @@ class Huayu(GeoAttX):
             y[:][y[:, 1] > y[:, 2]] = 0
             y[:][y[:, 0] < 0] = 0
             # y = rearrange(y[0], 'b h w -> b h w', b=b)
-            _, H, W = y.shape
+            _, _, H, W = y.shape
             if smooth:
-                y[:, 1:H - 1, 1:W - 1] = smooth(y)[:, 1:H - 1, 1:W - 1]
+                y[:, 0, 1:H - 1, 1:W - 1] = smooth(y)[:, 0, 1:H - 1, 1:W - 1]
             if self.print_timelog:
                 print('post process:', st.reset())
-            return y.detach().cpu().numpy()
+            return y.detach().cpu().numpy()[:, 0]
         except NoFileException as e:
             os.makedirs(self.root_path, exist_ok=True)
             with open(os.path.join(self.root_path, 'err.log'), 'a') as f:
