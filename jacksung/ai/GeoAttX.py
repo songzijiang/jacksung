@@ -364,7 +364,7 @@ class Huayu(GeoAttX):
                 n_data = np_data
             n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
-            n_data = rearrange(n_data, '(b c) h w -> b c h w', b=1)
+            n_data = rearrange(n_data, '(b c) h w -> b c h w', c=self.satellite_channel)
             n = self.satellite_norm.norm(n_data)[:, :, :, :]
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
