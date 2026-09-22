@@ -365,6 +365,7 @@ class Huayu(GeoAttX):
             n_data = torch.from_numpy(n_data)
             n_data = data_to_device([n_data], self.device, self.args.fp)[0]
             n_data = rearrange(n_data, '(b c) h w -> b c h w', c=self.satellite_channel)
+            b = n_data.shape[0]
             n = self.satellite_norm.norm(n_data)[:, :, :, :]
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
@@ -379,16 +380,16 @@ class Huayu(GeoAttX):
             y_ = self.model(n)
             if self.print_timelog:
                 print('inference:', st.reset())
-            y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=1)
+            y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=b)
             if up:
                 y_ = ps(y_)
-            y = self.imerg_norm.denorm(y_)[0]
-            y[0][y[1] > y[2]] = 0
-            y[0][y[0] < 0] = 0
-            y = rearrange(y[0], '(b h) w -> b h w', b=1)
+            y = self.imerg_norm.denorm(y_)
+            y[:][y[:, 1] > y[:, 2]] = 0
+            y[:][y[:, 0] < 0] = 0
+            # y = rearrange(y[0], 'b h w -> b h w', b=b)
             _, H, W = y.shape
             if smooth:
-                y[0, 1:H - 1, 1:W - 1] = smooth(y)[0, 1:H - 1, 1:W - 1]
+                y[, 1:H - 1, 1:W - 1] = smooth(y)[, 1:H - 1, 1:W - 1]
             if self.print_timelog:
                 print('post process:', st.reset())
             return y.detach().cpu().numpy()
