@@ -377,15 +377,18 @@ class Huayu(GeoAttX):
                 n = n.mean(dim=0, keepdim=True)
             if self.print_timelog:
                 print('preparing data:', st.reset())
-            y_ = self.model(n)
+            with torch.no_grad():  # 推理不需要计算图：批量时省下的显存/时间很可观
+                y_ = self.model(n)
             if self.print_timelog:
                 print('inference:', st.reset())
             y_ = rearrange(y_, '(b dsize) c h w -> b (c dsize) h w', b=b)
             if up:
                 y_ = ps(y_)
             y = self.imerg_norm.denorm(y_)
-            y[:][y[:, 1] > y[:, 2]] = 0
-            y[:][y[:, 0] < 0] = 0
+            # 掩码形状是 (b, H, W)，只能配 (b, H, W) 的视图：旧版 y 是 (3, H, W) 所以写 y[0][mask]，
+            # 现在是 (b, 3, H, W)，y[:][mask] 会按前三维逐维比对而报 IndexError（800 vs 3）
+            y[:, 0][y[:, 1] > y[:, 2]] = 0
+            y[:, 0][y[:, 0] < 0] = 0
             # y = rearrange(y[0], 'b h w -> b h w', b=b)
             _, _, H, W = y.shape
             if smooth:
