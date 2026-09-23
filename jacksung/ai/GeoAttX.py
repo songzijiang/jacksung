@@ -334,8 +334,7 @@ class Huayu(GeoAttX):
         return self.root_path
 
     def predict(self, npy_path=None, np_data=None, satellite_file=None, satellite=None, smooth=True, up=True, area=None,
-                area_ij=None,
-                satellite_date=None, fill_nan=False):
+                area_ij=None, satellite_date=None, fill_nan=False, save_input_tensor_path=None):
         try:
             st = Stopwatch()
             if npy_path is None and np_data is None:
@@ -370,13 +369,19 @@ class Huayu(GeoAttX):
             ps = nn.PixelShuffle(2)
             ups = nn.PixelUnshuffle(2)
             if smooth:
-                smooth = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+                smooth_fn = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+            else:
+                smooth_fn = None
             n = ups(n)
-            n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
-            if not up:
-                n = n.mean(dim=0, keepdim=True)
+            if up:
+                n = rearrange(n, 'b (c dsize) h w -> (b dsize) c h w', dsize=4)
+            else:
+                n = rearrange(n, 'b (c dsize) h w -> b dsize c h w', dsize=4)
+                n = n.mean(dim=1, keepdim=False)
             if self.print_timelog:
                 print('preparing data:', st.reset())
+            if save_input_tensor_path:
+                torch.save(n, os.path.join(save_input_tensor_path))
             with torch.no_grad():  # 推理不需要计算图：批量时省下的显存/时间很可观
                 y_ = self.model(n)
             if self.print_timelog:
@@ -392,7 +397,7 @@ class Huayu(GeoAttX):
             # y = rearrange(y[0], 'b h w -> b h w', b=b)
             _, _, H, W = y.shape
             if smooth:
-                y[:, 0, 1:H - 1, 1:W - 1] = smooth(y)[:, 0, 1:H - 1, 1:W - 1]
+                y[:, 0, 1:H - 1, 1:W - 1] = smooth_fn(y)[:, 0, 1:H - 1, 1:W - 1]
             if self.print_timelog:
                 print('post process:', st.reset())
             return y.detach().cpu().numpy()[:, 0]
